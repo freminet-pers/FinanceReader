@@ -361,4 +361,6 @@
     <string name="https_required">接口地址必须使用 https://（仅本地地址允许 http）。</string>
     <string name="translation_content_empty">文章内容为空，请先抓取全文再翻译。</string>
     <string name="translating">翻译中…</string>
+    <string name="translate_short">翻译</string>
+    <string name="show_original_short">显示原文</string>
 </resources>

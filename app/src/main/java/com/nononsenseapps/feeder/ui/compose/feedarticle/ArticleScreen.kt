@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -40,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -515,6 +517,7 @@ fun ArticleScreen(
                 onFeedTitleClick = onFeedTitleClick,
                 onOpenAudioPlayer = onOpenAudioPlayer,
                 onOpenInCustomTab = onOpenInCustomTab,
+                onTranslate = onTranslate,
                 modifier =
                     Modifier
                         .focusGroup()
@@ -612,6 +615,7 @@ fun ArticleContent(
     onFeedTitleClick: () -> Unit,
     onOpenAudioPlayer: (url: String) -> Unit,
     onOpenInCustomTab: () -> Unit,
+    onTranslate: () -> Unit,
     articleScrollState: ScrollState,
     modifier: Modifier = Modifier,
 ) {
@@ -667,6 +671,14 @@ fun ArticleContent(
         articleScrollState = articleScrollState,
     ) { indexOffset ->
         var offsetCounter = indexOffset
+
+        if (viewState.showTranslate) {
+            offsetCounter++
+            ArticleTranslateButton(
+                isShowingTranslated = viewState.isShowingTranslated,
+                onClick = onTranslate,
+            )
+        }
 
         if (viewState.isTranslationLoading) {
             offsetCounter++
@@ -765,6 +777,37 @@ private fun TranslationModelDownloadProgress(progress: BergamotModelDownloadProg
         TranslationProgressContent(
             progress = progress,
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun ArticleTranslateButton(
+    isShowingTranslated: Boolean,
+    onClick: () -> Unit,
+) {
+    // 正文顶部的一键翻译按钮（无需再进三点菜单）
+    FilledTonalButton(
+        onClick = onClick,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Translate,
+            contentDescription = null,
+        )
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(
+            text =
+                stringResource(
+                    if (isShowingTranslated) {
+                        R.string.show_original_short
+                    } else {
+                        R.string.translate_short
+                    },
+                ),
         )
     }
 }

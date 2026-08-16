@@ -16,6 +16,7 @@ Translation requirements:
 4. Units: preserve the original units (USD, %, basis points, etc.). When the target language has a standard expression, you may add it in parentheses at first occurrence, e.g. "10 basis points" → "10 个基点 (basis points)".
 5. Style: keep the register and tone of professional financial news. Translate idioms and figures of speech by meaning, not word for word. Render quotes accurately.
 6. Format: preserve paragraph breaks and the original structure. Output ONLY the translation — no explanations, no notes, no source text, and do not wrap the output in quotes.
+7. Directness & speed: do not add commentary, summaries, or analysis. Do not include any reasoning, thinking, or explanation — think as little as possible and output only the final translation.
 
 Text to translate:
     """.trimIndent()
