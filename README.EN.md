@@ -2,35 +2,50 @@
 
 [中文](README.md) | **English**
 
-> An Android app for reading U.S. stock-market &amp; economics news with AI translation, built as a fork of [Feeder](https://github.com/spacecowboy/Feeder) (GPL-3.0) for the Chinese market.
-> **No Google services required** — plain APK sideload, made for Huawei HarmonyOS (Android 12 compatibility layer) and other GMS-free devices.
+A U.S. stock-market news reader with one-tap AI translation — subscribe to a handful of solid finance feeds, and turn English headlines into clean Chinese (or any language) without mangling the numbers, tickers, or terminology.
+
+It's built on top of the open-source reader [Feeder](https://github.com/spacecowboy/Feeder) (GPL-3.0). Feeder is already a clean, local RSS reader; we kept all of that and layered two things on top: finance content and translation.
 
 ---
 
-## What it is
+## What's supported
 
-Finance Reader is a fully local RSS reader that ships pre-subscribed to 7 U.S. financial news feeds and adds full-article translation powered by **your own AI API**. Turn English financial news into Chinese (or any language) in one tap — precise, consistent terminology, with numbers and ticker symbols preserved.
+**Feed formats**
 
-## ✨ What we added / improved over Feeder
+- RSS, Atom, and JSON Feed — paste any URL.
+- OPML import / export (export doubles as a backup).
+- Offline reading, unread counts, bookmarks, home-screen widgets, full-text fetching — everything Feeder already had is still there.
 
-| Feature | Description |
+**System requirements**
+
+- Android 10 (API 29) or newer, arm64 devices.
+- No Google services, no account, everything runs locally.
+
+---
+
+## What we actually built
+
+1. **Finance content out of the box**: on first launch it auto-subscribes 7 U.S. finance feeds (CNBC, MarketWatch, Seeking Alpha, NPR, FRED), so there's news to read immediately.
+
+2. **AI translation with your own key**: plug in an API key, base URL and model name in Settings — DeepSeek, Kimi, Zhipu, Qwen, anything OpenAI-compatible — hit "Test connection", and you can translate full articles.
+
+3. **Translation tuned for financial news**: the built-in prompt keeps numbers, percentages, dates, currencies, tickers and company names as-is, uses industry-standard terminology ("basis points" → "基点"), and never adds or invents anything.
+
+4. **Offline source-language detection**: fully local (no Google services); recognizes English, Japanese, Korean, simplified/traditional Chinese and more, with a manual override. The target language follows your phone's system language by default.
+
+5. **One-tap full-text translation**: a "Translate" button right at the top of the article translates the whole thing in one tap — no "expand first, then translate" dance. Translated articles reopen already-translated, with no repeat API cost.
+
+6. **Long articles don't break**: oversized articles are chunked and translated piece by piece, with automatic retry on failure; translation keeps running in the background if you leave the page.
+
+7. **Security done properly**: the API key is encrypted with the system keystore, only HTTPS is used, and the key never leaks into logs or exports.
+
+---
+
+## Screenshots
+
+| Feed list | Subscriptions |
 |---|---|
-| 🗞️ Preloaded finance feeds | Auto-subscribes CNBC, MarketWatch, Seeking Alpha, NPR, FRED and more on first launch |
-| 🤖 BYOK AI translation | Fill API Key + Base URL + model; supports DeepSeek / Kimi / Zhipu / Qwen and any OpenAI-compatible endpoint; built-in "Test connection" |
-| 🎯 Finance-grade prompt | Built-in system prompt: industry-standard terminology, numbers/percentages/currencies/tickers/company names kept as-is, no additions or fabrications |
-| 🔤 Offline language detection | Unicode script + system `TextClassifier` + Lingua (no GMS); manual source-language override |
-| 🌐 Target follows system language | Target language defaults to the system language, overridable |
-| ⚡ One-tap full-text translation | A "Translate" button at the top of the article translates the **full text** in one tap |
-| 🔁 Background + cache | Translation keeps running in the background; translated articles reopen already-translated with no extra API cost |
-| 📰 Auto-translate list titles | Optional toggle translates every title in the list |
-| 🧩 Chunking + retry | Long articles are chunked at block boundaries; 429/5xx retry with backoff; serialized requests to control cost |
-| 🔐 Key security | API key encrypted with Android Keystore; HTTPS enforced; OPML export excludes keys |
-
-## 📸 Screenshots
-
-| Feed list | Drawer |
-|---|---|
-| ![Feed list](screenshots/1-feed-list.png) | ![Drawer](screenshots/2-drawer-feeds.png) |
+| ![Feed list](screenshots/1-feed-list.png) | ![Subscriptions](screenshots/2-drawer-feeds.png) |
 
 | Article | Translation settings |
 |---|---|
@@ -38,41 +53,31 @@ Finance Reader is a fully local RSS reader that ships pre-subscribed to 7 U.S. f
 
 | Settings (source language / prompt / test) | Top translate button |
 |---|---|
-| ![Settings 2](screenshots/5-translation-settings-2.png) | ![Translate button](screenshots/6-translate-button.png) |
+| ![Settings](screenshots/5-translation-settings-2.png) | ![Translate button](screenshots/6-translate-button.png) |
 
-## 🔧 How it works
+---
 
-```
-RSS fetch → text extraction → offline language detection → system prompt + source → OpenAI-compatible API → translation → local cache → display
-```
+## Install
 
-- **Language detection**: Unicode script prefilter (kana→ja, hangul→ko, Han→zh) → system `TextClassifier` (API 29+, AOSP) → `pemistahl/lingua` fallback → simplified/traditional heuristics.
-- **Translation**: user-provided `{baseURL}/chat/completions`, Bearer auth; non-streaming; long articles chunked at HTML block boundaries and joined.
-- **Security**: API key stored with Android Keystore AES-256-GCM; non-local plaintext `http://` endpoints rejected; no key in logs.
+1. Download `app-fdroid-release.apk` (arm64) from [Releases](../../releases).
+2. Allow "install from unknown sources" and install it.
+3. The app auto-subscribes finance feeds on first launch; set up your API under Settings → AI and translation → Translation API, tap "Test connection", and translate away.
 
-## 📦 Install
+See [`USER_GUIDE.md`](USER_GUIDE.md) for a detailed guide (Chinese).
 
-1. Download `app-fdroid-release.apk` (arm64-v8a).
-2. On Huawei HarmonyOS: disable "Pure Mode" → allow "unknown sources" → tap install, choose "install anyway" on the risk prompt.
-3. The app auto-subscribes finance feeds on first launch; configure your API in Settings → AI and translation → Translation API, tap "Test connection", then translate.
-
-> ⚠️ Do not upgrade the phone to HarmonyOS NEXT (5.x) — it no longer runs Android APKs.
-
-See `USER_GUIDE.md` for a detailed user guide (Chinese).
-
-## 🛠️ Build from source
+## Build from source
 
 ```bash
 # Requires JDK 17+ and Android SDK 36
 ./gradlew assembleFdroidRelease
 ```
 
-See `BUILD_GUIDE.md` for build, signing and versioning rules.
+See [`BUILD_GUIDE.md`](BUILD_GUIDE.md) for build, signing and versioning rules.
 
-## 📄 License
+## License
 
 Forked from [Feeder](https://github.com/spacecowboy/Feeder), licensed under **GPL-3.0** (see `LICENSE`).
 
-## 🙏 Credits
+## Credits
 
-Thanks to the Feeder authors and community; language detection by [Lingua](https://github.com/pemistahl/lingua) (MIT); AI calls via [openai-kotlin](https://github.com/aallam/openai-kotlin) (MIT).
+Thanks to the Feeder authors and community; language detection by [Lingua](https://github.com/pemistahl/lingua) (MIT), AI calls via [openai-kotlin](https://github.com/aallam/openai-kotlin) (MIT).

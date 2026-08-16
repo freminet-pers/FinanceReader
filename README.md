@@ -2,33 +2,48 @@
 
 **中文** | [English](README.EN.md)
 
-> 一个面向中国市场的「美股财经 RSS 阅读 + AI 翻译」安卓应用，基于开源项目 [Feeder](https://github.com/spacecowboy/Feeder)（GPL-3.0）二次开发。
-> **无需谷歌服务**，标准 APK 直装，适配华为鸿蒙（Android 12 兼容层）等无 GMS 设备。
+给爸妈（也给自己）用的美股财经新闻阅读器：把几个靠谱的财经源订进来，英文新闻一键翻成中文，翻译得还像那么回事——数字、股票代码、术语都不会翻错。
+
+这个项目是在开源阅读器 [Feeder](https://github.com/spacecowboy/Feeder)（GPL-3.0）基础上改的。Feeder 本来就是个很干净的本地 RSS 阅读器，我们没动它那些已经做好的部分，只在上面补了「财经内容」和「翻译」这两件事。
 
 ---
 
-## 这是做什么的
+## 支持什么
 
-财经速读是一个完全本地运行的 RSS 阅读器，开箱即订阅了 7 个美国财经新闻源，并内置了基于你**自备 AI API** 的整篇文章翻译能力——把英文财经新闻一键译成中文（或任意语言），翻译精准、术语统一、数字与股票代码原样保留。
+**订阅源格式**
 
-## ✨ 相比上游 Feeder，我们新增 / 改进了什么
+- RSS、Atom、JSON Feed，随手粘贴一个网址就能加。
+- OPML 导入 / 导出（导出就是一份备份）。
+- 离线阅读、未读计数、收藏、桌面小组件、全文抓取……Feeder 原有的能力都还在。
 
-| 功能 | 说明 |
-|---|---|
-| 🗞️ 预置美股财经源 | 首启自动订阅 CNBC、MarketWatch、Seeking Alpha、NPR、FRED 等 7 个源 |
-| 🤖 自配 AI 翻译 | 填 API Key + Base URL + 模型名即可；支持 DeepSeek / Kimi / 智谱 / 通义等所有 OpenAI 兼容端点；内置「测试连接」 |
-| 🎯 财经精译提示词 | 内置系统提示词：术语用行业标准译法、数字/百分比/货币/股票代码/公司名原样保留、不增删不发挥 |
-| 🔤 离线语言识别 | Unicode 脚本 + 系统 TextClassifier + Lingua 三级识别，**无 GMS**；可手动指定源语言 |
-| 🌐 目标语言跟随系统 | 目标语言默认跟随系统语言，也可手动选择 |
-| ⚡ 一键翻全文 | 正文顶部「翻译」按钮，点一下直接翻译**全文**（无需先展开再翻译） |
-| 🔁 后台翻译 + 缓存 | 翻译在后台继续；翻过的文章下次打开直接显示译文，不重复计费 |
-| 📰 列表标题自动翻译 | 设置里开启后，列表里所有标题自动翻译 |
-| 🧩 长文分块 + 重试 | 长文按块级边界分块翻译，429/5xx 自动退避重试，全局串行控费 |
-| 🔐 密钥安全 | API Key 用 Android Keystore 加密存储；强制 HTTPS；OPML 导出不含密钥 |
+**系统要求**
 
-## 📸 截图
+- Android 10（API 29）及以上，arm64 设备。
+- 不依赖谷歌服务，不用注册账号，所有数据都在本地。
 
-| 文章列表 | 订阅源抽屉 |
+---
+
+## 我们具体做了什么
+
+1. **开箱就有财经内容**：第一次打开自动订好 7 个美国财经源（CNBC、MarketWatch、Seeking Alpha、NPR、FRED），联网就能刷出新闻，不用自己一个一个加。
+
+2. **自带 AI 翻译，用的是你自己的 key**：设置里填 API Key、接口地址、模型名——DeepSeek、Kimi、智谱、通义，只要是 OpenAI 兼容接口都能用——点一下「测试连接」确认没问题，就能翻译整篇文章。
+
+3. **翻译是奔着财经新闻去的**：内置提示词专门调过——数字、百分比、日期、货币、股票代码、公司名一律原样保留；术语用行业标准译法（「basis points」就是「基点」）；不添油加醋、不凭空编造。
+
+4. **自动认原文语言**：完全离线的语言识别（不靠谷歌），英文、日文、韩文、简繁中文都能认；拿不准就手动指定源语言。目标语言默认跟手机系统走。
+
+5. **一键翻全文**：文章顶部一个「翻译」按钮，点一下直接出全文中文，不用先去「展开全文」再翻译。翻过的文章，下次打开直接就是译文，也不会重复花 API 的钱。
+
+6. **长文不翻车**：特别长的文章自动分块翻译，失败了自动重试；翻译在后台继续，切走页面也不影响。
+
+7. **安全上没含糊**：API Key 用系统级加密存本地，只走 HTTPS，日志和导出文件里都不会带出密钥。
+
+---
+
+## 截图
+
+| 文章列表 | 订阅源 |
 |---|---|
 | ![文章列表](screenshots/1-feed-list.png) | ![订阅源](screenshots/2-drawer-feeds.png) |
 
@@ -38,41 +53,31 @@
 
 | 设置（源语言 / 提示词 / 测试连接） | 顶部一键翻译按钮 |
 |---|---|
-| ![设置2](screenshots/5-translation-settings-2.png) | ![翻译按钮](screenshots/6-translate-button.png) |
+| ![设置](screenshots/5-translation-settings-2.png) | ![翻译按钮](screenshots/6-translate-button.png) |
 
-## 🔧 工作原理
+---
 
-```
-RSS 拉取 → 正文提取 → 语言识别(离线) → 系统提示词 + 原文 → OpenAI 兼容 API → 译文 → 本地缓存 → 展示
-```
+## 安装
 
-- **语言识别**：Unicode 文字脚本粗筛（假名→日文、谚文→韩文、纯汉字→中文）→ 系统 `TextClassifier`（API 29+，AOSP 原生）→ `pemistahl/lingua` 兜底 → 简繁字表。
-- **翻译**：用户自填 `{baseURL}/chat/completions`，Bearer 认证；v1 非流式；长文按 HTML 块级标签分块串行翻译后合并。
-- **安全**：API Key 以 Android Keystore AES-256-GCM 加密落盘；非本地明文 http 端点直接拒绝；日志不回显密钥。
+1. 到 [Releases](../../releases) 下载 `app-fdroid-release.apk`（arm64）。
+2. 手机上允许「未知来源」安装，装完打开即自动订阅财经源。
+3. 去 设置 → AI and translation → Translation API 填好你的 API，点「测试连接」成功后就能翻译。
 
-## 📦 安装
+更详细的图文说明见 [`USER_GUIDE.md`](USER_GUIDE.md)。
 
-1. 下载 `app-fdroid-release.apk`（arm64-v8a）。
-2. 华为鸿蒙：关闭「纯净模式」→ 允许「未知来源」→ 点击安装，遇到风险提示选「仍要安装」。
-3. 打开应用即自动订阅财经源；在 设置 → AI and translation → Translation API 里填入你的 API 配置，点「Test connection」成功后即可翻译。
-
-> ⚠️ 请勿将手机升级到鸿蒙 NEXT（5.x）——它不再支持安卓 APK。
-
-详细安装与使用说明见仓库根目录的 `USER_GUIDE.md`。
-
-## 🛠️ 从源码构建
+## 从源码构建
 
 ```bash
-# 需要 JDK 17+ 与 Android SDK 36
+# 需要 JDK 17+ 和 Android SDK 36
 ./gradlew assembleFdroidRelease
 ```
 
-构建、签名、版本号规则详见 `BUILD_GUIDE.md`。
+构建、签名和版本号规则见 [`BUILD_GUIDE.md`](BUILD_GUIDE.md)。
 
-## 📄 许可
+## 许可
 
-本项目基于 [Feeder](https://github.com/spacecowboy/Feeder) 二次开发，遵循 **GPL-3.0**（见 `LICENSE`）。
+基于 [Feeder](https://github.com/spacecowboy/Feeder) 二次开发，遵循 **GPL-3.0**（见 `LICENSE`）。
 
-## 🙏 致谢
+## 致谢
 
-感谢 Feeder 原作者与社区；语言识别使用 [Lingua](https://github.com/pemistahl/lingua)（MIT）；AI 调用使用 [openai-kotlin](https://github.com/aallam/openai-kotlin)（MIT）。
+感谢 Feeder 的作者和社区；语言识别用 [Lingua](https://github.com/pemistahl/lingua)（MIT），AI 调用用 [openai-kotlin](https://github.com/aallam/openai-kotlin)（MIT）。
