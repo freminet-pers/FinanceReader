@@ -36,7 +36,7 @@ android {
             .toInt()
 
     defaultConfig {
-        applicationId = "com.nononsenseapps.feeder"
+        applicationId = "com.financereader.app"
         // The version fields are set with actual values to support F-Droid
         // In Play variant, they are overridden and taken from git to support alpha/beta testing.
         // For actual releases they match.
@@ -118,6 +118,10 @@ android {
         val release by getting {
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                // 目标机麒麟 9000E 为 arm64；仅打 arm64 显著减小 APK
+                abiFilters.addAll(listOf("arm64-v8a"))
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
