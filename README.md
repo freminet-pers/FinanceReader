@@ -53,8 +53,7 @@ RSS 拉取 → 正文提取 → 语言识别(离线) → 系统提示词 + 原�
 ## 📦 安装
 
 1. 下载 `app-fdroid-release.apk`（arm64-v8a）。
-2. 华为鸿蒙：关闭「纯净模式」→ 允许「未知来源」→ 点击安装，遇到风险提示选「仍要安装」。
-3. 打开应用即自动订阅财经源；在 设置 → AI and translation → Translation API 里填入你的 API 配置，点「Test connection」成功后即可翻译。
+2. 打开应用即自动订阅财经源；在 设置 → AI and translation → Translation API 里填入你的 API 配置，点「Test connection」成功后即可翻译。
 
 > ⚠️ 请勿将手机升级到鸿蒙 NEXT（5.x）——它不再支持安卓 APK。
 
