@@ -25,12 +25,16 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class OpenAIApi(
     private val appLang: String,
     private val openAIClientFactory: (OpenAISettings) -> OpenAIClient,
 ) {
+    /** 系统语言的 ISO 639-1 代码（如 zh/en），用于总结返回首行的 Lang 标记（须为 ASCII）。 */
+    private val appLangCode: String = Locale.getDefault().language
+
     private val json =
         Json {
             ignoreUnknownKeys = true
@@ -463,9 +467,8 @@ class OpenAIApi(
                             TextContent(
                                 listOf(
                                     "You are an assistant in an RSS reader app, summarizing article content.",
-                                    "The app language is '$appLang'.",
-                                    "Provide summaries in the article's language if 99% recognizable; otherwise, use the app language.",
-                                    "First line must be exactly: 'Lang: \"ISO code\"' with NO markdown formatting around the Lang line whatsoever.",
+                                    "The app language is '$appLang'. Always write the summary in this language, regardless of the article's language.",
+                                    "First line must be exactly: 'Lang: \"$appLangCode\"' with NO markdown formatting around the Lang line whatsoever.",
                                     "Keep summaries up to 100 words, 3 paragraphs, with up to 3 bullet points per paragraph.",
                                     "For readability use markdown formatting: **bold** for emphasis, *italics* for quotes, bullet points (-) for lists, # headers for sections, and > for block quotes.",
                                     "Use markdown to structure content and improve readability.",

@@ -525,7 +525,7 @@ class SettingsStore(
                 baseUrl = sp.getStringNonNull(PREF_OPENAI_URL, ""),
                 azureApiVersion = sp.getStringNonNull(PREF_OPENAI_AZURE_VERSION, ""),
                 azureDeploymentId = sp.getStringNonNull(PREF_OPENAI_AZURE_DEPLOYMENT_ID, ""),
-                timeoutSeconds = sp.getInt(PREF_OPENAI_REQUEST_TIMEOUT_SECONDS, 30),
+                timeoutSeconds = sp.getInt(PREF_OPENAI_REQUEST_TIMEOUT_SECONDS, 120),
             ),
         )
     val openAiSettings = _openAiSettings.asStateFlow()
@@ -551,7 +551,7 @@ class SettingsStore(
                 baseUrl = sp.getStringNonNull(PREF_TRANSLATION_API_URL, ""),
                 azureApiVersion = sp.getStringNonNull(PREF_TRANSLATION_API_AZURE_VERSION, ""),
                 azureDeploymentId = sp.getStringNonNull(PREF_TRANSLATION_API_AZURE_DEPLOYMENT_ID, ""),
-                timeoutSeconds = sp.getInt(PREF_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS, 30),
+                timeoutSeconds = sp.getInt(PREF_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS, 120),
             ),
         )
     val translationApiSettings = _translationApiSettings.asStateFlow()
