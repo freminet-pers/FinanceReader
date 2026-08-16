@@ -119,8 +119,13 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             ndk {
-                // 目标机麒麟 9000E 为 arm64；仅打 arm64 显著减小 APK
-                abiFilters.addAll(listOf("arm64-v8a"))
+                // 目标机麒麟 9000E 为 arm64；仅打 arm64 显著减小 APK。
+                // 本地模拟器验证 release 时可临时加：-PextraAbis=x86_64
+                val extraAbis =
+                    (project.findProperty("extraAbis") as String? ?: "")
+                        .split(",")
+                        .filter { it.isNotBlank() }
+                abiFilters.addAll(listOf("arm64-v8a") + extraAbis)
             }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

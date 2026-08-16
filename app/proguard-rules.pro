@@ -58,6 +58,37 @@
 -keep, allowobfuscation, allowoptimization class * extends org.kodein.type.TypeReference
 -keep, allowobfuscation, allowoptimization class * extends org.kodein.type.JVMAbstractTypeToken$Companion$WrappingTest
 
+# kotlinx.serialization：R8 需保留 @Serializable 类的 serializer 与 Companion（反射查找）
+-if @kotlinx.serialization.Serializable class **
+-keepclassmembers class <1> {
+    static <1>$Companion Companion;
+}
+-if @kotlinx.serialization.Serializable class ** {
+    static **$* *;
+}
+-keepclassmembers class <2>$<3> {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-if @kotlinx.serialization.Serializable class ** {
+    public static ** INSTANCE;
+}
+-keepclassmembers class <1> {
+    public static <1> INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# openai-kotlin（JAR 无自带 consumer 规则，需显式保留其 serializer）
+-keep,includedescriptorclasses class com.aallam.openai.**$$serializer { *; }
+-keepclassmembers class com.aallam.openai.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.aallam.openai.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Lingua 语言识别库（纯 JVM，保留反射/资源入口）
+-keep class com.github.pemistahl.lingua.** { *; }
+
 # For Retrofit (not yet released in the lib)
 # Keep generic signature of Call, Response (R8 full mode strips signatures from non-kept items).
 -keep,allowobfuscation,allowshrinking interface retrofit2.Call

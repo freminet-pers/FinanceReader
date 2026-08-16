@@ -1,5 +1,14 @@
 Feeder
 =====
+
+> **财经速读（Finance Reader）** 是基于 Feeder 的二次开发版本（本仓库）。
+> 在上游基础上新增：首启预置美股财经 RSS 源（CNBC/MarketWatch/Seeking Alpha/NPR/FRED）、
+> 用户自配 OpenAI 兼容 API 的文章翻译（自定义 Base URL/模型/系统提示词）、
+> 离线语言自动识别（TextClassifier + Lingua，无 GMS）、API Key 系统级加密存储、
+> 长文分块翻译与重试退避。目标设备为无谷歌服务的华为鸿蒙 4.2（Android 12）手机，
+> 以标准 APK 侧载安装。
+> 上游项目：https://github.com/spacecowboy/Feeder（GPL-3.0）。
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y8Y44OYQL)
 
 <a href="https://f-droid.org/repository/browse/?fdid=com.nononsenseapps.feeder" target="_blank">

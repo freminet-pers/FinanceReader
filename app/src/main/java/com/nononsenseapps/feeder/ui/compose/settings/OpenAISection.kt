@@ -1487,11 +1487,8 @@ private fun OpenAISettings.validationMessage(
             when {
                 baseUrl.isInsecureNonLocalUrl() -> context.getString(R.string.https_required)
                 modelId.isBlank() -> context.getString(R.string.enter_model_id_before_saving)
-                modelsResult == OpenAIModelsState.None || modelsResult is OpenAIModelsState.Loading ->
-                    context.getString(R.string.verifying_api_settings)
-                modelsResult is OpenAIModelsState.Error -> {
-                    modelsResult.message.ifBlank { context.getString(R.string.api_settings_could_not_be_verified) }
-                }
+                // 兼容端点可能不支持 /models 列表：不再阻塞保存，
+                // 连通性以「测试连接」为准
                 else -> null
             }
         }
