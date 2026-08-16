@@ -5,6 +5,7 @@ import com.nononsenseapps.feeder.archmodel.OpenAISettings
 import com.nononsenseapps.feeder.archmodel.Repository
 import com.nononsenseapps.feeder.archmodel.TranslationApiSettings
 import com.nononsenseapps.feeder.localtranslation.LocalTranslator
+import com.nononsenseapps.feeder.openai.DEFAULT_TRANSLATION_SYSTEM_PROMPT
 import com.nononsenseapps.feeder.openai.OpenAIApi
 import com.nononsenseapps.feeder.openai.OpenAIApi.TranslationResult
 import com.nononsenseapps.feeder.openai.OpenAIApi.TranslationResult.ErrorAction
@@ -34,6 +35,7 @@ class TranslationManager(
     private val openAIApi: OpenAIApi by instance()
     private val localTranslator: LocalTranslator by instance()
     private val filePathProvider: FilePathProvider by instance()
+    private val languageDetector = LanguageDetector(application)
     private val json =
         Json {
             ignoreUnknownKeys = true
@@ -146,16 +148,21 @@ class TranslationManager(
                 } else {
                     ""
                 }
-
+            // 用户手动指定源语言时信任用户，跳过“已是目标语言”检测
+            val manualSourceLanguage = manualSourceLanguageName()
             val detectedSameLanguage =
-                detectSourceLanguageIfAlreadyTargetLanguage(
-                    content =
-                        listOf(item.title, item.snippet)
-                            .filter(String::isNotBlank)
-                            .joinToString(separator = "\n\n"),
-                    targetLanguage = targetLanguage,
-                    settings = settings,
-                )
+                if (manualSourceLanguage == null) {
+                    detectSourceLanguageIfAlreadyTargetLanguage(
+                        content =
+                            listOf(item.title, item.snippet)
+                                .filter(String::isNotBlank)
+                                .joinToString(separator = "\n\n"),
+                        targetLanguage = targetLanguage,
+                        settings = settings,
+                    )
+                } else {
+                    null
+                }
             if (detectedSameLanguage != null) {
                 val updatedCache =
                     cache.copy(
@@ -184,7 +191,7 @@ class TranslationManager(
                         content = item.snippet,
                         targetLanguage = targetLanguage,
                         settings = settings,
-                        sourceLangHint = cachedSourceLanguage,
+                        sourceLangHint = manualSourceLanguage ?: cachedSourceLanguage,
                     )
                 }
             val translatedSnippet = cachedSnippet ?: translatedSnippetResult?.content.orEmpty()
@@ -202,16 +209,17 @@ class TranslationManager(
                         content = item.title,
                         targetLanguage = targetLanguage,
                         settings = settings,
-                        sourceLangHint = sourceLanguageHint,
+                        sourceLangHint = manualSourceLanguage ?: sourceLanguageHint,
                     )
                 }
             val translatedTitle = cachedTitle ?: translatedTitleResult?.content.orEmpty()
             val sourceLanguage =
-                translatedSnippetResult
-                    ?.detectedLanguageOrBlank()
-                    .orEmpty()
-                    .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
-                    .ifBlank { cachedSourceLanguage }
+                manualSourceLanguage
+                    ?: translatedSnippetResult
+                        ?.detectedLanguageOrBlank()
+                        .orEmpty()
+                        .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
+                        .ifBlank { cachedSourceLanguage }
 
             val updatedCache =
                 cache.copy(
@@ -299,16 +307,21 @@ class TranslationManager(
                 )
             }
 
+            val manualSourceLanguage = manualSourceLanguageName()
             val detectedSameLanguage =
-                detectArticleAlreadyInTargetLanguage(
-                    itemId = itemId,
-                    title = title,
-                    html = html,
-                    isFullText = isFullText,
-                    settings = settings,
-                    targetLanguage = targetLanguage,
-                    existingCache = cache,
-                )
+                if (manualSourceLanguage == null) {
+                    detectArticleAlreadyInTargetLanguage(
+                        itemId = itemId,
+                        title = title,
+                        html = html,
+                        isFullText = isFullText,
+                        settings = settings,
+                        targetLanguage = targetLanguage,
+                        existingCache = cache,
+                    )
+                } else {
+                    null
+                }
             if (detectedSameLanguage != null) {
                 return@withContext ArticleTranslation(
                     translatedTitle = title,
@@ -326,7 +339,7 @@ class TranslationManager(
                         content = html,
                         targetLanguage = targetLanguage,
                         settings = settings,
-                        sourceLangHint = cachedSourceLanguage,
+                        sourceLangHint = manualSourceLanguage ?: cachedSourceLanguage,
                         preserveHtml = true,
                     )
                 }
@@ -344,17 +357,18 @@ class TranslationManager(
                         content = title,
                         targetLanguage = targetLanguage,
                         settings = settings,
-                        sourceLangHint = sourceLanguageHint,
+                        sourceLangHint = manualSourceLanguage ?: sourceLanguageHint,
                     )
                 }
             val translatedTitle = cachedTitle ?: translatedTitleResult?.content.orEmpty().ifBlank { title }
             val translatedHtml = cachedHtml ?: translatedHtmlResult?.content.orEmpty().ifBlank { html }
             val sourceLanguage =
-                translatedHtmlResult
-                    ?.detectedLanguageOrBlank()
-                    .orEmpty()
-                    .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
-                    .ifBlank { cachedSourceLanguage }
+                manualSourceLanguage
+                    ?: translatedHtmlResult
+                        ?.detectedLanguageOrBlank()
+                        .orEmpty()
+                        .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
+                        .ifBlank { cachedSourceLanguage }
 
             val updatedCache =
                 cache.copy(
@@ -442,6 +456,8 @@ class TranslationManager(
             .takeIf(File::isFile)
             ?.readText()
             ?.let { runCatching { json.decodeFromString<CachedTranslations>(it) }.getOrNull() }
+            // 提示词变化 → 视为未命中，重新翻译
+            ?.takeIf { it.promptHash == promptHash(settings) }
             ?: CachedTranslations()
 
     private fun saveCache(
@@ -452,8 +468,16 @@ class TranslationManager(
     ) {
         val file = cacheFile(itemId, settings, targetLanguage)
         file.parentFile?.mkdirs()
-        file.writeText(json.encodeToString(CachedTranslations.serializer(), cache))
+        file.writeText(
+            json.encodeToString(
+                CachedTranslations.serializer(),
+                cache.copy(promptHash = promptHash(settings)),
+            ),
+        )
     }
+
+    private fun promptHash(settings: OpenAISettings): String =
+        sha256(settings.systemPrompt.ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT })
 
     private fun cacheFile(
         itemId: Long,
@@ -485,7 +509,20 @@ class TranslationManager(
             .digest(value.toByteArray())
             .joinToString(separator = "") { byte -> "%02x".format(byte) }
 
-    private fun translationSettings(): TranslationApiSettings = repository.translationApiSettings.value.takeIf { it.canUseAsTranslationApi } ?: TranslationApiSettings()
+    /** 手动设定的源语言名；"auto"/空白 → null（走自动识别管线）。 */
+    private fun manualSourceLanguageName(): String? =
+        repository.translationSourceLanguage.value
+            .trim()
+            .takeIf { it.isNotBlank() && !it.equals("auto", ignoreCase = true) }
+
+    private fun translationSettings(): TranslationApiSettings =
+        repository.translationApiSettings.value
+            .takeIf { it.canUseAsTranslationApi }
+            ?.copy(
+                systemPrompt =
+                    repository.translationSystemPrompt.value
+                        .ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT },
+            ) ?: TranslationApiSettings()
 
     private suspend fun translateOrNull(
         content: String,
@@ -552,11 +589,23 @@ class TranslationManager(
                 preserveHtml = preserveHtml,
             )
         } else {
+            // 无显式源语言时用本机管线识别（OpenAI 兼容端点不返回源语言）
+            val effectiveHint =
+                sourceLangHint
+                    .trim()
+                    .ifBlank {
+                        languageDetector
+                            .detectLanguageTag(content)
+                            ?.let(languageDetector::languageName)
+                            .orEmpty()
+                    }
             openAIApi.translate(
                 content = content,
                 targetLanguage = targetLanguage,
                 settings = settings,
                 preserveHtml = preserveHtml,
+                systemPrompt = settings.systemPrompt,
+                sourceLangHint = effectiveHint,
             )
         }
 
@@ -690,6 +739,7 @@ class SystemTranslationSettingsRequiredException(
 @Serializable
 private data class CachedTranslations(
     val sourceLanguage: String = "",
+    val promptHash: String = "",
     val titleHash: String? = null,
     val translatedTitle: String? = null,
     val snippetHash: String? = null,

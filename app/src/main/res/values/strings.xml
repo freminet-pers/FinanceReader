@@ -396,4 +396,16 @@
 
   <string name="widget_title">Feeder</string>
   <string name="widget_refreshing">Refreshing</string>
+
+  <string name="translation_source_language">Source language</string>
+  <string name="translation_source_auto">Auto detect</string>
+  <string name="translation_source_language_description">Used when translating with an AI provider. Auto detect works fully offline on this device.</string>
+  <string name="translation_system_prompt">System prompt</string>
+  <string name="translation_system_prompt_placeholder">Leave empty to use the built-in financial-news prompt</string>
+  <string name="translation_system_prompt_description">Custom instruction for precise translation. Empty means the built-in prompt.</string>
+  <string name="restore_default">Restore default</string>
+  <string name="test_connection">Test connection</string>
+  <string name="connection_test_success">Connection successful</string>
+  <string name="connection_test_failed">Connection failed</string>
+  <string name="https_required">The endpoint must use https:// (only local addresses may use http).</string>
 </resources>

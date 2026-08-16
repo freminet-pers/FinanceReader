@@ -347,4 +347,16 @@
     <string name="stop_audio">停止音频</string>
     <string name="seek_back_10_seconds">快退 10 秒</string>
     <string name="seek_forward_10_seconds">快进 10 秒</string>
+
+    <string name="translation_source_language">源语言</string>
+    <string name="translation_source_auto">自动识别</string>
+    <string name="translation_source_language_description">使用 AI 翻译时的原文语言。自动识别完全在本机离线完成。</string>
+    <string name="translation_system_prompt">系统提示词</string>
+    <string name="translation_system_prompt_placeholder">留空则使用内置的财经新闻精译提示词</string>
+    <string name="translation_system_prompt_description">自定义翻译指令，用于保证翻译精准。留空表示使用内置提示词。</string>
+    <string name="restore_default">恢复默认</string>
+    <string name="test_connection">测试连接</string>
+    <string name="connection_test_success">连接成功</string>
+    <string name="connection_test_failed">连接失败</string>
+    <string name="https_required">接口地址必须使用 https://（仅本地地址允许 http）。</string>
 </resources>

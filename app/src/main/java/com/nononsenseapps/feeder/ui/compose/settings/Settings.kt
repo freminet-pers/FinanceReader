@@ -86,6 +86,7 @@ import com.nononsenseapps.feeder.archmodel.DarkThemePreferences
 import com.nononsenseapps.feeder.archmodel.FeedItemStyle
 import com.nononsenseapps.feeder.archmodel.ItemOpener
 import com.nononsenseapps.feeder.archmodel.LinkOpener
+import com.nononsenseapps.feeder.archmodel.OpenAISettings
 import com.nononsenseapps.feeder.archmodel.SortingOptions
 import com.nononsenseapps.feeder.archmodel.SwipeAsRead
 import com.nononsenseapps.feeder.archmodel.SyncFrequency
@@ -236,6 +237,12 @@ fun SettingsScreen(
             onTranslationApiEvent = settingsViewModel::onTranslationApiSettingsEvent,
             preferredTranslationLanguage = viewState.preferredTranslationLanguage,
             onPreferredTranslationLanguageChange = settingsViewModel::setPreferredTranslationLanguage,
+            translationSourceLanguage = viewState.translationSourceLanguage,
+            onTranslationSourceLanguageChange = settingsViewModel::setTranslationSourceLanguage,
+            translationSystemPrompt = viewState.translationSystemPrompt,
+            onTranslationSystemPromptChange = settingsViewModel::setTranslationSystemPrompt,
+            connectionTestState = viewState.connectionTestState,
+            onTranslationTestConnection = settingsViewModel::onTranslationTestConnection,
             canTranslate = viewState.canTranslate,
             isOpenDrawerOnFab = viewState.isOpenDrawerOnFab,
             onOpenDrawerOnFab = settingsViewModel::setOpenDrawerOnFab,
@@ -334,6 +341,12 @@ private fun SettingsScreenPreview() {
             onTranslationApiEvent = {},
             preferredTranslationLanguage = "",
             onPreferredTranslationLanguageChange = {},
+            translationSourceLanguage = "auto",
+            onTranslationSourceLanguageChange = {},
+            translationSystemPrompt = "",
+            onTranslationSystemPromptChange = {},
+            connectionTestState = ConnectionTestState.Idle,
+            onTranslationTestConnection = {},
             canTranslate = false,
             isOpenDrawerOnFab = false,
             onOpenDrawerOnFab = {},
@@ -421,6 +434,12 @@ fun SettingsList(
     onTranslationApiEvent: (TranslationApiSettingsEvent) -> Unit,
     preferredTranslationLanguage: String,
     onPreferredTranslationLanguageChange: (String) -> Unit,
+    translationSourceLanguage: String,
+    onTranslationSourceLanguageChange: (String) -> Unit,
+    translationSystemPrompt: String,
+    onTranslationSystemPromptChange: (String) -> Unit,
+    connectionTestState: ConnectionTestState,
+    onTranslationTestConnection: (OpenAISettings) -> Unit,
     canTranslate: Boolean,
     isOpenDrawerOnFab: Boolean,
     onOpenDrawerOnFab: (Boolean) -> Unit,
@@ -854,6 +873,12 @@ fun SettingsList(
                 onEvent = onTranslationApiEvent,
                 preferredTranslationLanguage = preferredTranslationLanguage,
                 onPreferredTranslationLanguageChange = onPreferredTranslationLanguageChange,
+                translationSourceLanguage = translationSourceLanguage,
+                onTranslationSourceLanguageChange = onTranslationSourceLanguageChange,
+                translationSystemPrompt = translationSystemPrompt,
+                onTranslationSystemPromptChange = onTranslationSystemPromptChange,
+                connectionTestState = connectionTestState,
+                onTestConnection = onTranslationTestConnection,
                 onLocalTranslationContentSave = {
                     pendingDeletedLanguagePairs.forEach { (source, target) ->
                         onDeleteLanguagePair(source, target)

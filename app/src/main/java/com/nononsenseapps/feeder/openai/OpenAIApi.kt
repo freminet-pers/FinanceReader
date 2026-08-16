@@ -220,6 +220,8 @@ class OpenAIApi(
         targetLanguage: String,
         settings: OpenAISettings,
         preserveHtml: Boolean = false,
+        systemPrompt: String = "",
+        sourceLangHint: String = "",
     ): TranslationResult {
         if (settings.isDeepL) {
             return translateWithDeepL(
@@ -232,8 +234,128 @@ class OpenAIApi(
         if (settings.isLocalTranslation) {
             return TranslationResult.Error(content = "Local translation is not available through this API")
         }
-        return TranslationResult.Error(content = "Translation is not supported for this provider")
+        return translateWithOpenAI(
+            content = content,
+            targetLanguage = targetLanguage,
+            settings = settings,
+            preserveHtml = preserveHtml,
+            systemPrompt = systemPrompt,
+            sourceLangHint = sourceLangHint,
+        )
     }
+
+    /** 以最小 chat 请求验证配置可用性（兼容端点可能不支持 /models 列表）。 */
+    suspend fun testConnection(settings: OpenAISettings): TranslationResult {
+        if (settings.isDeepL) {
+            return when (val result = listModelIds(settings)) {
+                is ModelsResult.Success -> TranslationResult.Success(content = "ok", detectedLanguage = "")
+                is ModelsResult.MissingToken -> TranslationResult.Error(content = "Missing token")
+                is ModelsResult.AzureApiVersionRequired -> TranslationResult.Error(content = "Azure API version required")
+                is ModelsResult.AzureDeploymentIdRequired -> TranslationResult.Error(content = "Azure deployment ID required")
+                is ModelsResult.Error -> TranslationResult.Error(content = result.message ?: "DeepL verification failed")
+            }
+        }
+        if (settings.isLocalTranslation) {
+            return TranslationResult.Error(content = "Local translation needs no connection test")
+        }
+        return translateWithOpenAI(
+            content = "ping",
+            targetLanguage = "en",
+            settings = settings,
+            preserveHtml = false,
+            systemPrompt = TEST_CONNECTION_SYSTEM_PROMPT,
+            sourceLangHint = "en",
+        )
+    }
+
+    private suspend fun translateWithOpenAI(
+        content: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+        preserveHtml: Boolean,
+        systemPrompt: String,
+        sourceLangHint: String,
+    ): TranslationResult {
+        // 运行时兜底：非本地明文 http 一律拒绝（防 API Key 明文外泄）
+        if (settings.baseUrl.isInsecureNonLocalUrl()) {
+            return TranslationResult.Error(content = "The endpoint must use https://")
+        }
+        return try {
+            val response =
+                openAIClientFactory(settings).chatCompletion(
+                    request =
+                        translationRequest(
+                            content = content,
+                            targetLanguage = targetLanguage,
+                            settings = settings,
+                            preserveHtml = preserveHtml,
+                            systemPrompt = systemPrompt,
+                            sourceLangHint = sourceLangHint,
+                        ),
+                    requestOptions = null,
+                )
+            val text =
+                response.choices
+                    .firstOrNull()
+                    ?.message
+                    ?.content
+                    ?.trim()
+                    .orEmpty()
+                    .ifBlank { throw IllegalStateException("Response content is null") }
+            // 源语言由本机语言识别管线判定（DeepL 路径才使用其返回值）
+            TranslationResult.Success(content = text, detectedLanguage = "")
+        } catch (e: Exception) {
+            TranslationResult.Error(content = e.messageOrCause().orEmpty())
+        }
+    }
+
+    private fun translationRequest(
+        content: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+        preserveHtml: Boolean,
+        systemPrompt: String,
+        sourceLangHint: String,
+    ): ChatCompletionRequest =
+        ChatCompletionRequest(
+            model = ModelId(id = settings.modelId),
+            messages =
+                listOf(
+                    ChatMessage(
+                        role = ChatRole.System,
+                        messageContent =
+                            TextContent(
+                                buildString {
+                                    val effectivePrompt =
+                                        systemPrompt
+                                            .ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT }
+                                    append(
+                                        effectivePrompt
+                                            .replace("{target_language}", targetLanguage.trim())
+                                            .replace(
+                                                "{source_language}",
+                                                sourceLangHint
+                                                    .trim()
+                                                    .ifBlank { "the original language" },
+                                            ),
+                                    )
+                                    if (preserveHtml) {
+                                        append(
+                                            "\n\nThe input contains HTML markup. " +
+                                                "Preserve all HTML tags and their structure exactly; " +
+                                                "translate only the visible text content.",
+                                        )
+                                    }
+                                },
+                            ),
+                    ),
+                    ChatMessage(
+                        role = ChatRole.User,
+                        messageContent = TextContent(content),
+                    ),
+                ),
+            responseFormat = ChatResponseFormat.Text,
+        )
 
     private fun translateWithDeepL(
         settings: OpenAISettings,
@@ -394,7 +516,7 @@ val OpenAISettings.canTranslate: Boolean
     get() = isValid
 
 val OpenAISettings.canUseAsTranslationApi: Boolean
-    get() = canTranslate && (isDeepL || isLocalTranslation)
+    get() = canTranslate
 
 val OpenAISettings.isBlankConfiguration: Boolean
     get() =
@@ -406,24 +528,35 @@ val OpenAISettings.isBlankConfiguration: Boolean
 
 fun OpenAISettings.toOpenAIHost(withAzureDeploymentId: Boolean): OpenAIHost =
     baseUrl.let { baseUrl ->
-        if (baseUrl.isEmpty()) {
-            OpenAIHost.OpenAI
-        } else {
-            OpenAIHost(
-                baseUrl =
-                    URLBuilder()
-                        .takeFrom(baseUrl)
-                        .also {
-                            it.appendPathSegments("openai")
-                            if (withAzureDeploymentId && azureDeploymentId.isNotBlank()) {
-                                it.appendPathSegments("deployments", azureDeploymentId)
-                            }
-                        }.buildString(),
-                queryParams =
-                    azureApiVersion.let { apiVersion ->
-                        if (apiVersion.isEmpty()) emptyMap() else mapOf("api-version" to apiVersion)
-                    },
-            )
+        when {
+            baseUrl.isEmpty() -> OpenAIHost.OpenAI
+
+            // Azure 的路径规范要求 /openai 段（可选 /deployments/<id>）；路径必须以 / 结尾
+            isAzure ->
+                OpenAIHost(
+                    baseUrl =
+                        URLBuilder()
+                            .takeFrom(baseUrl)
+                            .also {
+                                it.appendPathSegments("openai")
+                                if (withAzureDeploymentId && azureDeploymentId.isNotBlank()) {
+                                    it.appendPathSegments("deployments", azureDeploymentId)
+                                }
+                            }.buildString()
+                            .let { if (it.endsWith("/")) it else "$it/" },
+                    queryParams =
+                        azureApiVersion.let { apiVersion ->
+                            if (apiVersion.isEmpty()) emptyMap() else mapOf("api-version" to apiVersion)
+                        },
+                )
+
+            // 其余 OpenAI 兼容端点（DeepSeek/Kimi/智谱/通义/Perplexity/自定义）：
+            // 地址原样使用；openai-kotlin 约定：含路径时必须以 "/" 结尾
+            else ->
+                OpenAIHost(
+                    baseUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/",
+                    queryParams = emptyMap(),
+                )
         }
     }
 
@@ -500,3 +633,15 @@ private fun OpenAISettings.normalizedDeepLBaseUrl(): String {
 }
 
 const val LOCAL_TRANSLATION_PROVIDER_URL = "local://translation"
+
+/**
+ * 明文 http 且非本地/内网地址（本地调试与局域网自建服务放行）。
+ * 用于拒绝可能泄露 API Key 的非加密端点。
+ */
+fun String.isInsecureNonLocalUrl(): Boolean =
+    startsWith("http://", ignoreCase = true) &&
+        !startsWith("http://localhost", ignoreCase = true) &&
+        !startsWith("http://127.", ignoreCase = true) &&
+        !startsWith("http://10.", ignoreCase = true) &&
+        !startsWith("http://192.168.", ignoreCase = true) &&
+        !startsWith("http://172.16.", ignoreCase = true)

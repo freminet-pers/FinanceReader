@@ -86,7 +86,6 @@ class OpmlParserTest : DIAware {
                         UserSettings.SETTING_ANIMATED_PAGING -> "true"
                         UserSettings.SETTING_SHOW_TITLE_UNREAD_COUNT -> "true"
                         UserSettings.SETTING_MAX_ITEM_COUNT_PER_FEED -> "200"
-                        UserSettings.SETTING_OPENAI_KEY -> "test-api-key"
                         UserSettings.SETTING_OPENAI_MODEL_ID -> "gpt-4o-mini"
                         UserSettings.SETTING_OPENAI_URL -> "https://api.openai.com"
                         UserSettings.SETTING_OPENAI_AZURE_VERSION -> "2023-05-15"
@@ -94,7 +93,8 @@ class OpmlParserTest : DIAware {
                         UserSettings.SETTING_OPENAI_REQUEST_TIMEOUT_SECONDS -> "45"
                         UserSettings.SETTING_BLOCKLIST_APPLY_TO_SUMMARIES -> "true"
                         UserSettings.SETTING_PREFERRED_TRANSLATION_LANGUAGE -> "French"
-                        UserSettings.SETTING_TRANSLATION_API_KEY -> "translation-api-key"
+                        UserSettings.SETTING_TRANSLATION_SOURCE_LANGUAGE -> "English"
+                        UserSettings.SETTING_TRANSLATION_SYSTEM_PROMPT -> "Be precise"
                         UserSettings.SETTING_TRANSLATION_API_MODEL_ID -> ""
                         UserSettings.SETTING_TRANSLATION_API_URL -> "https://api.deepl.com"
                         UserSettings.SETTING_TRANSLATION_API_AZURE_VERSION -> "2024-06-01"
@@ -152,6 +152,8 @@ class OpmlParserTest : DIAware {
                 settingsStore.openAiSettings
                 settingsStore.setOpenAiSettings(any())
                 settingsStore.setPreferredTranslationLanguage("French")
+                settingsStore.setTranslationSourceLanguage("English")
+                settingsStore.setTranslationSystemPrompt("Be precise")
                 settingsStore.translationApiSettings
                 settingsStore.setTranslationApiSettings(any())
                 settingsStore.setTranslateArticlePreviewsByDefault(true)

@@ -35,6 +35,7 @@ testRunner = "1.7.0"
 lifecycle = "2.10.0"
 room = "2.8.4"
 openai-client = "4.1.0"
+lingua = "1.2.2"
 compose = "2025.10.01"
 activityCompose = "1.13.0"
 paging = "3.3.6"
@@ -59,6 +60,7 @@ okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
 openai-client-bom = { module = "com.aallam.openai:openai-client-bom", version.ref = "openai-client" }
 openai-client = { module = "com.aallam.openai:openai-client" }
+lingua = { module = "com.github.pemistahl:lingua", version.ref = "lingua" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
 ktlint-compose = { module = "io.nlopez.compose.rules:ktlint", version.ref = "ktlint-compose" }
 room = { module = "androidx.room:room-compiler", version.ref = "room" }

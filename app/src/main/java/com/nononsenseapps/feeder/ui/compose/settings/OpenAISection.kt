@@ -28,10 +28,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,10 +62,12 @@ import androidx.compose.ui.window.DialogProperties
 import com.aallam.openai.client.OpenAIHost
 import com.nononsenseapps.feeder.R
 import com.nononsenseapps.feeder.archmodel.OpenAISettings
+import com.nononsenseapps.feeder.openai.DEFAULT_TRANSLATION_SYSTEM_PROMPT
 import com.nononsenseapps.feeder.openai.LOCAL_TRANSLATION_PROVIDER_URL
 import com.nononsenseapps.feeder.openai.canUseAsTranslationApi
 import com.nononsenseapps.feeder.openai.isBlankConfiguration
 import com.nononsenseapps.feeder.openai.isDeepL
+import com.nononsenseapps.feeder.openai.isInsecureNonLocalUrl
 import com.nononsenseapps.feeder.openai.isLocalTranslation
 import com.nononsenseapps.feeder.ui.compose.theme.LocalDimens
 import kotlinx.coroutines.delay
@@ -87,6 +91,12 @@ fun OpenAISection(
     localTranslationContent: @Composable () -> Unit = {},
     onLocalTranslationContentSave: () -> Unit = {},
     onLocalTranslationContentDismiss: () -> Unit = {},
+    translationSourceLanguage: String = "",
+    onTranslationSourceLanguageChange: (String) -> Unit = {},
+    translationSystemPrompt: String = "",
+    onTranslationSystemPromptChange: (String) -> Unit = {},
+    connectionTestState: ConnectionTestState = ConnectionTestState.Idle,
+    onTestConnection: (OpenAISettings) -> Unit = {},
 ) {
     val sanitizedSettings = remember(section, state.settings) { section.sanitizeSettings(state.settings) }
 
@@ -100,6 +110,8 @@ fun OpenAISection(
     if (state.isEditMode) {
         var current by remember(section, state.settings) { mutableStateOf(sanitizedSettings) }
         var currentPreferredTranslationLanguage by remember(preferredTranslationLanguage) { mutableStateOf(preferredTranslationLanguage) }
+        var currentTranslationSourceLanguage by remember(translationSourceLanguage) { mutableStateOf(translationSourceLanguage) }
+        var currentTranslationSystemPrompt by remember(translationSystemPrompt) { mutableStateOf(translationSystemPrompt) }
         var provider by remember(section, state.settings) { mutableStateOf(AIProviderPreset.fromSettings(sanitizedSettings)) }
         val context = LocalContext.current
         val matchingModelsResult =
@@ -146,6 +158,12 @@ fun OpenAISection(
                         section = section,
                         validationMessage = validationMessage,
                         preferredTranslationLanguage = currentPreferredTranslationLanguage,
+                        translationSourceLanguage = currentTranslationSourceLanguage,
+                        onTranslationSourceLanguageChange = { currentTranslationSourceLanguage = it },
+                        translationSystemPrompt = currentTranslationSystemPrompt,
+                        onTranslationSystemPromptChange = { currentTranslationSystemPrompt = it },
+                        connectionTestState = connectionTestState,
+                        onTestConnection = onTestConnection,
                         showModelsError = state.showModelsError,
                         onEvent = {
                             if (it is OpenAISettingsEvent.UpdateSettings) {
@@ -184,6 +202,8 @@ fun OpenAISection(
                                 onEvent(OpenAISettingsEvent.UpdateSettings(current))
                                 if (section == OpenAISectionType.Translation) {
                                     onPreferredTranslationLanguageChange(currentPreferredTranslationLanguage)
+                                    onTranslationSourceLanguageChange(currentTranslationSourceLanguage)
+                                    onTranslationSystemPromptChange(currentTranslationSystemPrompt)
                                 }
                                 onLocalTranslationContentSave()
                                 onEvent(OpenAISettingsEvent.SwitchEditMode(enabled = false))
@@ -211,6 +231,12 @@ fun TranslationApiSection(
     localTranslationContent: @Composable () -> Unit = {},
     onLocalTranslationContentSave: () -> Unit = {},
     onLocalTranslationContentDismiss: () -> Unit = {},
+    translationSourceLanguage: String = "",
+    onTranslationSourceLanguageChange: (String) -> Unit = {},
+    translationSystemPrompt: String = "",
+    onTranslationSystemPromptChange: (String) -> Unit = {},
+    connectionTestState: ConnectionTestState = ConnectionTestState.Idle,
+    onTestConnection: (OpenAISettings) -> Unit = {},
 ) {
     OpenAISection(
         title = title,
@@ -224,6 +250,12 @@ fun TranslationApiSection(
         localTranslationContent = localTranslationContent,
         onLocalTranslationContentSave = onLocalTranslationContentSave,
         onLocalTranslationContentDismiss = onLocalTranslationContentDismiss,
+        translationSourceLanguage = translationSourceLanguage,
+        onTranslationSourceLanguageChange = onTranslationSourceLanguageChange,
+        translationSystemPrompt = translationSystemPrompt,
+        onTranslationSystemPromptChange = onTranslationSystemPromptChange,
+        connectionTestState = connectionTestState,
+        onTestConnection = onTestConnection,
     )
 }
 
@@ -286,6 +318,12 @@ private fun OpenAISectionEdit(
     onPreferredTranslationLanguageChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     localTranslationContent: @Composable () -> Unit = {},
+    translationSourceLanguage: String = "",
+    onTranslationSourceLanguageChange: (String) -> Unit = {},
+    translationSystemPrompt: String = "",
+    onTranslationSystemPromptChange: (String) -> Unit = {},
+    connectionTestState: ConnectionTestState = ConnectionTestState.Idle,
+    onTestConnection: (OpenAISettings) -> Unit = {},
 ) {
     val latestOnEvent by rememberUpdatedState(onEvent)
     val showAzureFields = provider == AIProviderPreset.AZURE_OPENAI
@@ -498,6 +536,28 @@ private fun OpenAISectionEdit(
             }
         }
 
+        // 仅 OpenAI 兼容 / Azure 翻译需要：源语言、系统提示词、测试连接
+        if (section == OpenAISectionType.Translation &&
+            hasProvider &&
+            provider != AIProviderPreset.DEEPL &&
+            provider != AIProviderPreset.LOCAL_TRANSLATION
+        ) {
+            TranslationSourceLanguageField(
+                translationSourceLanguage = translationSourceLanguage,
+                onTranslationSourceLanguageChange = onTranslationSourceLanguageChange,
+            )
+
+            TranslationSystemPromptField(
+                translationSystemPrompt = translationSystemPrompt,
+                onTranslationSystemPromptChange = onTranslationSystemPromptChange,
+            )
+
+            TestConnectionField(
+                connectionTestState = connectionTestState,
+                onTestConnection = { onTestConnection(current) },
+            )
+        }
+
         if (hasProvider && provider != AIProviderPreset.LOCAL_TRANSLATION) {
             TextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -663,6 +723,170 @@ private fun TranslationLanguageField(
     }
 }
 
+sealed interface ConnectionTestState {
+    data object Idle : ConnectionTestState
+
+    data object Running : ConnectionTestState
+
+    data object Success : ConnectionTestState
+
+    data class Error(
+        val message: String,
+    ) : ConnectionTestState
+}
+
+@Composable
+private fun TranslationSourceLanguageField(
+    translationSourceLanguage: String,
+    onTranslationSourceLanguageChange: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val options = remember { SOURCE_LANGUAGE_OPTIONS }
+    val selectedLabel =
+        remember(translationSourceLanguage) {
+            options
+                .firstOrNull { it.code == translationSourceLanguage }
+                ?.name
+                ?: translationSourceLanguage
+        }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value =
+                    if (translationSourceLanguage == "auto") {
+                        stringResource(R.string.translation_source_auto)
+                    } else {
+                        selectedLabel
+                    },
+                label = {
+                    Text(stringResource(R.string.translation_source_language))
+                },
+                readOnly = true,
+                onValueChange = {},
+                trailingIcon = {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Filled.ExpandMore, contentDescription = stringResource(R.string.translation_source_language))
+                    }
+                },
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.translation_source_auto)) },
+                    onClick = {
+                        onTranslationSourceLanguageChange("auto")
+                        expanded = false
+                    },
+                )
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.name) },
+                        onClick = {
+                            onTranslationSourceLanguageChange(option.code)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+        Text(
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
+            text = stringResource(R.string.translation_source_language_description),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun TranslationSystemPromptField(
+    translationSystemPrompt: String,
+    onTranslationSystemPromptChange: (String) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = translationSystemPrompt,
+            label = {
+                Text(stringResource(R.string.translation_system_prompt))
+            },
+            placeholder = {
+                Text(stringResource(R.string.translation_system_prompt_placeholder))
+            },
+            minLines = 4,
+            maxLines = 12,
+            onValueChange = onTranslationSystemPromptChange,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp, top = 4.dp, end = 8.dp),
+                text = stringResource(R.string.translation_system_prompt_description),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TextButton(
+                onClick = { onTranslationSystemPromptChange(DEFAULT_TRANSLATION_SYSTEM_PROMPT) },
+            ) {
+                Text(stringResource(R.string.restore_default))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TestConnectionField(
+    connectionTestState: ConnectionTestState,
+    onTestConnection: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(
+            onClick = onTestConnection,
+            enabled = connectionTestState != ConnectionTestState.Running,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (connectionTestState == ConnectionTestState.Running) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.size(8.dp))
+            }
+            Text(stringResource(R.string.test_connection))
+        }
+        when (connectionTestState) {
+            ConnectionTestState.Idle,
+            ConnectionTestState.Running,
+            -> {}
+
+            ConnectionTestState.Success -> {
+                Text(
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
+                    text = stringResource(R.string.connection_test_success),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            is ConnectionTestState.Error -> {
+                Text(
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
+                    text = connectionTestState.message.ifBlank { stringResource(R.string.connection_test_failed) },
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun BergamotLanguagesOnlySwitch(
     checked: Boolean,
@@ -738,6 +962,23 @@ private fun translationLanguageOptions(
         options
     }
 }
+
+/** 源语言可选列表（值即提示词中使用的语言名）。 */
+private val SOURCE_LANGUAGE_OPTIONS =
+    listOf(
+        TranslationLanguageOption("English", "English"),
+        TranslationLanguageOption("Simplified Chinese", "Simplified Chinese"),
+        TranslationLanguageOption("Traditional Chinese", "Traditional Chinese"),
+        TranslationLanguageOption("Japanese", "Japanese"),
+        TranslationLanguageOption("Korean", "Korean"),
+        TranslationLanguageOption("Russian", "Russian"),
+        TranslationLanguageOption("French", "French"),
+        TranslationLanguageOption("German", "German"),
+        TranslationLanguageOption("Spanish", "Spanish"),
+        TranslationLanguageOption("Portuguese", "Portuguese"),
+        TranslationLanguageOption("Italian", "Italian"),
+        TranslationLanguageOption("Dutch", "Dutch"),
+    )
 
 private fun translationLanguageOption(
     provider: AIProviderPreset,
@@ -1071,7 +1312,7 @@ private enum class AIProviderPreset(
     OPENAI_COMPATIBLE(
         titleRes = R.string.provider_openai_compatible,
         supportsSummary = true,
-        supportsTranslation = false,
+        supportsTranslation = true,
         isDeepL = false,
         isTranslationOnly = false,
         needsApiKey = true,
@@ -1080,7 +1321,7 @@ private enum class AIProviderPreset(
     AZURE_OPENAI(
         titleRes = R.string.provider_azure_openai,
         supportsSummary = true,
-        supportsTranslation = false,
+        supportsTranslation = true,
         isDeepL = false,
         isTranslationOnly = false,
         needsApiKey = true,
@@ -1244,6 +1485,7 @@ private fun OpenAISettings.validationMessage(
         AIProviderPreset.NONE -> null
         AIProviderPreset.OPENAI_COMPATIBLE -> {
             when {
+                baseUrl.isInsecureNonLocalUrl() -> context.getString(R.string.https_required)
                 modelId.isBlank() -> context.getString(R.string.enter_model_id_before_saving)
                 modelsResult == OpenAIModelsState.None || modelsResult is OpenAIModelsState.Loading ->
                     context.getString(R.string.verifying_api_settings)
@@ -1256,6 +1498,7 @@ private fun OpenAISettings.validationMessage(
 
         AIProviderPreset.AZURE_OPENAI -> {
             when {
+                baseUrl.isInsecureNonLocalUrl() -> context.getString(R.string.https_required)
                 modelId.isBlank() -> context.getString(R.string.enter_model_id_before_saving)
                 baseUrl.isBlank() -> context.getString(R.string.enter_azure_endpoint_before_saving)
                 azureDeploymentId.isBlank() -> context.getString(R.string.enter_azure_deployment_id_before_saving)
@@ -1299,9 +1542,6 @@ private fun OpenAISectionType.sanitizeSettings(settings: OpenAISettings): OpenAI
             }
 
         OpenAISectionType.Translation ->
-            when {
-                settings.isBlankConfiguration -> settings
-                settings.isDeepL || settings.isLocalTranslation -> settings
-                else -> OpenAISettings()
-            }
+            // 翻译支持全部供应商：OpenAI 兼容 / Azure / DeepL / 本地 Bergamot
+            settings
     }

@@ -111,8 +111,7 @@ open class OPMLImporter(
             UserSettings.SETTING_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT -> settingsStore.setTranslateArticlePreviewsByDefault(value.toBoolean())
             UserSettings.SETTING_TRANSLATE_ARTICLES_BY_DEFAULT -> settingsStore.setTranslateArticlesByDefault(value.toBoolean())
 
-            // OpenAI related settings
-            UserSettings.SETTING_OPENAI_KEY,
+            // OpenAI related settings（API Key 属敏感信息，不参与导出/导入）
             UserSettings.SETTING_OPENAI_MODEL_ID,
             UserSettings.SETTING_OPENAI_URL,
             UserSettings.SETTING_OPENAI_AZURE_VERSION,
@@ -122,7 +121,6 @@ open class OPMLImporter(
                 val current = settingsStore.openAiSettings.value
                 val newSettings =
                     when (UserSettings.fromKey(key)) {
-                        UserSettings.SETTING_OPENAI_KEY -> current.copy(key = value)
                         UserSettings.SETTING_OPENAI_MODEL_ID -> current.copy(modelId = value)
                         UserSettings.SETTING_OPENAI_URL -> current.copy(baseUrl = value)
                         UserSettings.SETTING_OPENAI_AZURE_VERSION -> current.copy(azureApiVersion = value)
@@ -136,7 +134,12 @@ open class OPMLImporter(
             UserSettings.SETTING_PREFERRED_TRANSLATION_LANGUAGE ->
                 settingsStore.setPreferredTranslationLanguage(value)
 
-            UserSettings.SETTING_TRANSLATION_API_KEY,
+            UserSettings.SETTING_TRANSLATION_SOURCE_LANGUAGE ->
+                settingsStore.setTranslationSourceLanguage(value)
+
+            UserSettings.SETTING_TRANSLATION_SYSTEM_PROMPT ->
+                settingsStore.setTranslationSystemPrompt(value)
+
             UserSettings.SETTING_TRANSLATION_API_MODEL_ID,
             UserSettings.SETTING_TRANSLATION_API_URL,
             UserSettings.SETTING_TRANSLATION_API_AZURE_VERSION,
@@ -146,7 +149,6 @@ open class OPMLImporter(
                 val current = settingsStore.translationApiSettings.value
                 val newSettings =
                     when (UserSettings.fromKey(key)) {
-                        UserSettings.SETTING_TRANSLATION_API_KEY -> current.copy(key = value)
                         UserSettings.SETTING_TRANSLATION_API_MODEL_ID -> current.copy(modelId = value)
                         UserSettings.SETTING_TRANSLATION_API_URL -> current.copy(baseUrl = value)
                         UserSettings.SETTING_TRANSLATION_API_AZURE_VERSION -> current.copy(azureApiVersion = value)

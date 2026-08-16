@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.core.content.getSystemService
 import androidx.lifecycle.viewModelScope
 import com.nononsenseapps.feeder.ApplicationCoroutineScope
+import com.nononsenseapps.feeder.R
 import com.nononsenseapps.feeder.archmodel.DarkThemePreferences
 import com.nononsenseapps.feeder.archmodel.FeedItemStyle
 import com.nononsenseapps.feeder.archmodel.ItemOpener
@@ -210,6 +211,18 @@ class SettingsViewModel(
         repository.setPreferredTranslationLanguage(value)
     }
 
+    fun setTranslationSourceLanguage(value: String) {
+        repository.setTranslationSourceLanguage(value)
+    }
+
+    fun setTranslationSystemPrompt(value: String) {
+        repository.setTranslationSystemPrompt(value)
+    }
+
+    fun onTranslationTestConnection(settings: OpenAISettings) {
+        onTranslationApiSettingsEvent(OpenAISettingsEvent.TestConnection(settings))
+    }
+
     fun loadDownloadedLanguagePairs() {
         viewModelScope.launch {
             _downloadedLanguagePairs.value = bergamotModelManager.getDownloadedLanguagePairs()
@@ -237,6 +250,7 @@ class SettingsViewModel(
 
     private val summaryOpenAIModelsState = MutableStateFlow<OpenAIModelsState>(OpenAIModelsState.None)
     private val translationApiModelsState = MutableStateFlow<TranslationApiModelsState>(OpenAIModelsState.None)
+    private val connectionTestState = MutableStateFlow<ConnectionTestState>(ConnectionTestState.Idle)
     private val _downloadedLanguagePairs = MutableStateFlow<List<LanguagePairInfo>>(emptyList())
     val downloadedLanguagePairs: StateFlow<List<LanguagePairInfo>> = _downloadedLanguagePairs.asStateFlow()
 
@@ -308,6 +322,9 @@ class SettingsViewModel(
                 repository.isAnimatedPaging,
                 downloadedLanguagePairs,
                 repository.useInAppAudioPlayer,
+                repository.translationSourceLanguage,
+                repository.translationSystemPrompt,
+                connectionTestState,
             ) { params: Array<Any> ->
                 @Suppress("UNCHECKED_CAST")
                 SettingsViewState(
@@ -358,6 +375,9 @@ class SettingsViewModel(
                     isAnimatedPaging = params[37] as Boolean,
                     translationModelPairs = params[38] as List<LanguagePairInfo>,
                     useInAppAudioPlayer = params[39] as Boolean,
+                    translationSourceLanguage = params[40] as String,
+                    translationSystemPrompt = params[41] as String,
+                    connectionTestState = params[42] as ConnectionTestState,
                 )
             }.collect {
                 _viewState.value = it
@@ -401,6 +421,20 @@ class SettingsViewModel(
             is OpenAISettingsEvent.ShowModelsError -> {
                 val current = currentState()
                 updateState(current.copy(showModelsError = event.show))
+            }
+            is OpenAISettingsEvent.TestConnection -> {
+                connectionTestState.value = ConnectionTestState.Running
+                viewModelScope.launch(Dispatchers.IO) {
+                    val result = openAIApi.testConnection(event.settings)
+                    connectionTestState.value =
+                        when (result) {
+                            is OpenAIApi.TranslationResult.Success -> ConnectionTestState.Success
+                            is OpenAIApi.TranslationResult.Error ->
+                                ConnectionTestState.Error(
+                                    result.content.ifBlank { context.getString(R.string.connection_test_failed) },
+                                )
+                        }
+                }
             }
         }
     }
@@ -452,6 +486,9 @@ data class SettingsViewState(
     val isPagingMode: Boolean = false,
     val isAnimatedPaging: Boolean = false,
     val useInAppAudioPlayer: Boolean = true,
+    val translationSourceLanguage: String = "auto",
+    val translationSystemPrompt: String = "",
+    val connectionTestState: ConnectionTestState = ConnectionTestState.Idle,
 )
 
 data class UIFeedSettings(
@@ -500,6 +537,10 @@ sealed interface OpenAISettingsEvent {
 
     data class ShowModelsError(
         val show: Boolean,
+    ) : OpenAISettingsEvent
+
+    data class TestConnection(
+        val settings: OpenAISettings,
     ) : OpenAISettingsEvent
 }
 

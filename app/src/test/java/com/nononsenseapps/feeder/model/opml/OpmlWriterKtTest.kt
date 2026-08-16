@@ -147,7 +147,6 @@ class OpmlWriterKtTest {
               <feeder:setting key="pref_open_drawer_on_fab" value="true"/>
               <feeder:setting key="pref_show_title_unread_count" value="true"/>
               <feeder:setting key="pref_max_item_count_per_feed" value="200"/>
-              <feeder:setting key="pref_openai_key" value="test-api-key"/>
               <feeder:setting key="pref_openai_model_id" value="gpt-4o-mini"/>
               <feeder:setting key="pref_openai_url" value="https://api.openai.com"/>
               <feeder:setting key="pref_openai_azure_version" value="2023-05-15"/>
@@ -155,12 +154,13 @@ class OpmlWriterKtTest {
               <feeder:setting key="pref_openai_request_timeout_seconds" value="45"/>
               <feeder:setting key="pref_blocklist_apply_to_summaries" value="true"/>
               <feeder:setting key="pref_openai_translation_language" value="French"/>
-              <feeder:setting key="pref_translation_api_key" value="translation-api-key"/>
               <feeder:setting key="pref_translation_api_model_id" value=""/>
               <feeder:setting key="pref_translation_api_url" value="https://api.deepl.com"/>
               <feeder:setting key="pref_translation_api_azure_version" value="2024-06-01"/>
               <feeder:setting key="pref_translation_api_azure_deployment_id" value="translation-deployment"/>
               <feeder:setting key="pref_translation_api_request_timeout_seconds" value="90"/>
+              <feeder:setting key="pref_translation_source_language" value="English"/>
+              <feeder:setting key="pref_translation_system_prompt" value="Be precise"/>
               <feeder:setting key="pref_translate_feed_cards_by_default" value="true"/>
               <feeder:setting key="pref_translate_articles_by_default" value="true"/>
               <feeder:blocked pattern="foo"/>
@@ -208,7 +208,6 @@ class OpmlWriterKtTest {
                         UserSettings.SETTING_SHOW_TITLE_UNREAD_COUNT -> "true"
                         UserSettings.SETTING_MAX_ITEM_COUNT_PER_FEED -> "200"
                         UserSettings.SETTING_DEFAULT_OPEN_ITEM_WITH -> PREF_VAL_OPEN_WITH_CUSTOM_TAB
-                        UserSettings.SETTING_OPENAI_KEY -> "test-api-key"
                         UserSettings.SETTING_OPENAI_MODEL_ID -> "gpt-4o-mini"
                         UserSettings.SETTING_OPENAI_URL -> "https://api.openai.com"
                         UserSettings.SETTING_OPENAI_AZURE_VERSION -> "2023-05-15"
@@ -216,7 +215,8 @@ class OpmlWriterKtTest {
                         UserSettings.SETTING_OPENAI_REQUEST_TIMEOUT_SECONDS -> "45"
                         UserSettings.SETTING_BLOCKLIST_APPLY_TO_SUMMARIES -> "true"
                         UserSettings.SETTING_PREFERRED_TRANSLATION_LANGUAGE -> "French"
-                        UserSettings.SETTING_TRANSLATION_API_KEY -> "translation-api-key"
+                        UserSettings.SETTING_TRANSLATION_SOURCE_LANGUAGE -> "English"
+                        UserSettings.SETTING_TRANSLATION_SYSTEM_PROMPT -> "Be precise"
                         UserSettings.SETTING_TRANSLATION_API_MODEL_ID -> ""
                         UserSettings.SETTING_TRANSLATION_API_URL -> "https://api.deepl.com"
                         UserSettings.SETTING_TRANSLATION_API_AZURE_VERSION -> "2024-06-01"

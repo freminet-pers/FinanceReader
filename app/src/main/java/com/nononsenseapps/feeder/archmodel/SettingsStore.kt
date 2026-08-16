@@ -2,12 +2,14 @@
 
 package com.nononsenseapps.feeder.archmodel
 
+import android.app.Application
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Build
 import androidx.annotation.StringRes
 import com.nononsenseapps.feeder.R
 import com.nononsenseapps.feeder.background.schedulePeriodicRssSync
+import com.nononsenseapps.feeder.crypto.KeystoreCrypto
 import com.nononsenseapps.feeder.db.room.BlocklistDao
 import com.nononsenseapps.feeder.db.room.ID_UNSET
 import com.nononsenseapps.feeder.ui.compose.feedarticle.FeedListFilter
@@ -27,6 +29,7 @@ import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
 import java.time.Instant
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsStore(
@@ -35,6 +38,7 @@ class SettingsStore(
     private val sp: SharedPreferences by instance()
     private val blocklistDao: BlocklistDao by instance()
     private val filePathProvider: FilePathProvider by instance()
+    private val application: Application by instance()
 
     private val _addedFeederNews = MutableStateFlow(sp.getBoolean(PREF_ADDED_FEEDER_NEWS, false))
     val addedFeederNews: StateFlow<Boolean> = _addedFeederNews.asStateFlow()
@@ -516,7 +520,7 @@ class SettingsStore(
     private val _openAiSettings =
         MutableStateFlow(
             OpenAISettings(
-                key = sp.getStringNonNull(PREF_OPENAI_KEY, ""),
+                key = KeystoreCrypto.decrypt(sp.getStringNonNull(PREF_OPENAI_KEY, "")),
                 modelId = sp.getStringNonNull(PREF_OPENAI_MODEL_ID, ""),
                 baseUrl = sp.getStringNonNull(PREF_OPENAI_URL, ""),
                 azureApiVersion = sp.getStringNonNull(PREF_OPENAI_AZURE_VERSION, ""),
@@ -530,7 +534,7 @@ class SettingsStore(
         _openAiSettings.value = value
         sp
             .edit()
-            .putString(PREF_OPENAI_KEY, value.key)
+            .putString(PREF_OPENAI_KEY, KeystoreCrypto.encrypt(value.key))
             .putString(PREF_OPENAI_MODEL_ID, value.modelId)
             .putString(PREF_OPENAI_URL, value.baseUrl)
             .putString(PREF_OPENAI_AZURE_VERSION, value.azureApiVersion)
@@ -542,7 +546,7 @@ class SettingsStore(
     private val _translationApiSettings =
         MutableStateFlow(
             OpenAISettings(
-                key = sp.getStringNonNull(PREF_TRANSLATION_API_KEY, ""),
+                key = KeystoreCrypto.decrypt(sp.getStringNonNull(PREF_TRANSLATION_API_KEY, "")),
                 modelId = sp.getStringNonNull(PREF_TRANSLATION_API_MODEL_ID, ""),
                 baseUrl = sp.getStringNonNull(PREF_TRANSLATION_API_URL, ""),
                 azureApiVersion = sp.getStringNonNull(PREF_TRANSLATION_API_AZURE_VERSION, ""),
@@ -556,7 +560,7 @@ class SettingsStore(
         _translationApiSettings.value = value
         sp
             .edit()
-            .putString(PREF_TRANSLATION_API_KEY, value.key)
+            .putString(PREF_TRANSLATION_API_KEY, KeystoreCrypto.encrypt(value.key))
             .putString(PREF_TRANSLATION_API_MODEL_ID, value.modelId)
             .putString(PREF_TRANSLATION_API_URL, value.baseUrl)
             .putString(PREF_TRANSLATION_API_AZURE_VERSION, value.azureApiVersion)
@@ -565,9 +569,41 @@ class SettingsStore(
             .apply()
     }
 
+    /**
+     * 翻译源语言："auto"（默认，自动识别）或具体语言展示名（如 "English"）。
+     */
+    private val _translationSourceLanguage =
+        MutableStateFlow(
+            sp.getStringNonNull(PREF_TRANSLATION_SOURCE_LANGUAGE, "auto"),
+        )
+    val translationSourceLanguage = _translationSourceLanguage.asStateFlow()
+
+    fun setTranslationSourceLanguage(value: String) {
+        _translationSourceLanguage.value = value
+        sp.edit().putString(PREF_TRANSLATION_SOURCE_LANGUAGE, value).apply()
+    }
+
+    /**
+     * 用户可编辑的翻译系统提示词；空串 = 使用内置默认（DEFAULT_TRANSLATION_SYSTEM_PROMPT）。
+     */
+    private val _translationSystemPrompt =
+        MutableStateFlow(
+            sp.getStringNonNull(PREF_TRANSLATION_SYSTEM_PROMPT, ""),
+        )
+    val translationSystemPrompt = _translationSystemPrompt.asStateFlow()
+
+    fun setTranslationSystemPrompt(value: String) {
+        _translationSystemPrompt.value = value
+        sp.edit().putString(PREF_TRANSLATION_SYSTEM_PROMPT, value).apply()
+    }
+
     private val _preferredTranslationLanguage =
         MutableStateFlow(
-            sp.getStringNonNull(PREF_PREFERRED_TRANSLATION_LANGUAGE, ""),
+            // 目标语言默认跟随系统语言（用户确认的需求）；用户仍可在设置中修改
+            sp.getStringNonNull(
+                PREF_PREFERRED_TRANSLATION_LANGUAGE,
+                Locale.getDefault().displayLanguage,
+            ),
         )
     val preferredTranslationLanguage = _preferredTranslationLanguage.asStateFlow()
 
@@ -739,6 +775,10 @@ const val PREF_TRANSLATION_API_AZURE_VERSION = "pref_translation_api_azure_versi
 const val PREF_TRANSLATION_API_AZURE_DEPLOYMENT_ID = "pref_translation_api_azure_deployment_id"
 const val PREF_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS = "pref_translation_api_request_timeout_seconds"
 
+/** 翻译源语言（"auto" 或具体语言名）与用户可编辑的系统提示词（空 = 内置默认）。 */
+const val PREF_TRANSLATION_SOURCE_LANGUAGE = "pref_translation_source_language"
+const val PREF_TRANSLATION_SYSTEM_PROMPT = "pref_translation_system_prompt"
+
 // Keep the legacy persisted key name for preference and OPML compatibility.
 const val PREF_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT = "pref_translate_feed_cards_by_default"
 const val PREF_TRANSLATE_ARTICLES_BY_DEFAULT = "pref_translate_articles_by_default"
@@ -791,7 +831,8 @@ enum class UserSettings(
     SETTING_OPEN_DRAWER_ON_FAB(key = PREF_OPEN_DRAWER_ON_FAB),
     SETTING_SHOW_TITLE_UNREAD_COUNT(key = PREF_SHOW_TITLE_UNREAD_COUNT),
     SETTING_MAX_ITEM_COUNT_PER_FEED(key = PREF_MAX_ITEM_COUNT_PER_FEED),
-    SETTING_OPENAI_KEY(key = PREF_OPENAI_KEY),
+
+    // 注意：API Key 属敏感信息，严禁进入 OPML/设置导出（安全要求）。
     SETTING_OPENAI_MODEL_ID(key = PREF_OPENAI_MODEL_ID),
     SETTING_OPENAI_URL(key = PREF_OPENAI_URL),
     SETTING_OPENAI_AZURE_VERSION(key = PREF_OPENAI_AZURE_VERSION),
@@ -799,12 +840,13 @@ enum class UserSettings(
     SETTING_OPENAI_REQUEST_TIMEOUT_SECONDS(key = PREF_OPENAI_REQUEST_TIMEOUT_SECONDS),
     SETTING_BLOCKLIST_APPLY_TO_SUMMARIES(key = PREF_BLOCKLIST_APPLY_TO_SUMMARIES),
     SETTING_PREFERRED_TRANSLATION_LANGUAGE(key = PREF_PREFERRED_TRANSLATION_LANGUAGE),
-    SETTING_TRANSLATION_API_KEY(key = PREF_TRANSLATION_API_KEY),
     SETTING_TRANSLATION_API_MODEL_ID(key = PREF_TRANSLATION_API_MODEL_ID),
     SETTING_TRANSLATION_API_URL(key = PREF_TRANSLATION_API_URL),
     SETTING_TRANSLATION_API_AZURE_VERSION(key = PREF_TRANSLATION_API_AZURE_VERSION),
     SETTING_TRANSLATION_API_AZURE_DEPLOYMENT_ID(key = PREF_TRANSLATION_API_AZURE_DEPLOYMENT_ID),
     SETTING_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS(key = PREF_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS),
+    SETTING_TRANSLATION_SOURCE_LANGUAGE(key = PREF_TRANSLATION_SOURCE_LANGUAGE),
+    SETTING_TRANSLATION_SYSTEM_PROMPT(key = PREF_TRANSLATION_SYSTEM_PROMPT),
     SETTING_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT(key = PREF_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT),
     SETTING_TRANSLATE_ARTICLES_BY_DEFAULT(key = PREF_TRANSLATE_ARTICLES_BY_DEFAULT),
     ;
@@ -890,6 +932,12 @@ data class OpenAISettings(
     val azureApiVersion: String = "",
     val azureDeploymentId: String = "",
     val key: String = "",
+    /**
+     * 翻译用系统提示词（仅翻译路径使用；空 = 内置默认）。
+     * 注意：该字段不随本数据类持久化（由 SettingsStore 单独存 PREF_TRANSLATION_SYSTEM_PROMPT），
+     * 仅用于在运行时把提示词从设置层传送到请求层。
+     */
+    val systemPrompt: String = "",
 )
 
 typealias TranslationApiSettings = OpenAISettings

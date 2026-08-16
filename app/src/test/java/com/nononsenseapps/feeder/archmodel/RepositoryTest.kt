@@ -99,7 +99,7 @@ class RepositoryTest : DIAware {
     }
 
     @Test
-    fun initialStartWillAddFeederNews() {
+    fun initialStartWillAddFinanceFeeds() {
         every { settingsStore.addedFeederNews } returns MutableStateFlow(false)
 
         // Construct it
@@ -107,12 +107,14 @@ class RepositoryTest : DIAware {
 
         coVerify(timeout = 500L, exactly = 1) {
             settingsStore.addedFeederNews
-            feedStore.upsertFeed(
-                Feed(
-                    title = "Feeder News",
-                    url = URL("https://news.nononsenseapps.com/index.atom"),
-                ),
-            )
+            Repository.DEFAULT_FINANCE_FEEDS.forEach { (title, url) ->
+                feedStore.upsertFeed(
+                    Feed(
+                        title = title,
+                        url = URL(url),
+                    ),
+                )
+            }
             settingsStore.setAddedFeederNews(true)
         }
     }

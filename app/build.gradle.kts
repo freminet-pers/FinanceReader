@@ -264,6 +264,8 @@ dependencies {
     implementation(libs.bundles.kotlin)
     implementation(libs.openai.client)
     implementation(libs.ktor.client.okhttp)
+    // 语言自动识别兜底（纯 JVM，无 GMS 依赖）
+    implementation(libs.lingua)
 
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)

@@ -372,6 +372,14 @@ class Repository(
 
     fun setPreferredTranslationLanguage(value: String) = settingsStore.setPreferredTranslationLanguage(value)
 
+    val translationSourceLanguage = settingsStore.translationSourceLanguage
+
+    fun setTranslationSourceLanguage(value: String) = settingsStore.setTranslationSourceLanguage(value)
+
+    val translationSystemPrompt = settingsStore.translationSystemPrompt
+
+    fun setTranslationSystemPrompt(value: String) = settingsStore.setTranslationSystemPrompt(value)
+
     val translateArticlePreviewsByDefault = settingsStore.translateArticlePreviewsByDefault
 
     fun setTranslateArticlePreviewsByDefault(value: Boolean) = settingsStore.setTranslateArticlePreviewsByDefault(value)
@@ -902,7 +910,7 @@ class Repository(
          * 首次启动预置的美股财经 RSS 源（2026-08 实测可访问，中国网络可用性最佳集合）。
          * 来源调研见 DEV_PLAN.md Phase 2 与 research/ai-translation-research.md。
          */
-        private val DEFAULT_FINANCE_FEEDS =
+        internal val DEFAULT_FINANCE_FEEDS =
             listOf(
                 "CNBC Top News" to "https://www.cnbc.com/id/100003114/device/rss/rss.html",
                 "CNBC Markets" to "https://www.cnbc.com/id/10000664/device/rss/rss.html",

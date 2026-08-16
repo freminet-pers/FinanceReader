@@ -9,7 +9,6 @@ import com.aallam.openai.api.model.Model
 import com.aallam.openai.client.LoggingConfig
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
-import com.nononsenseapps.feeder.BuildConfig
 import com.nononsenseapps.feeder.archmodel.OpenAISettings
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.plugin
@@ -43,7 +42,8 @@ private fun OpenAISettings.toOpenAIConfig(): OpenAIConfig =
     OpenAIConfig(
         token = key,
         timeout = Timeout(socket = timeoutSeconds.coerceIn(30, 600).seconds),
-        logging = LoggingConfig(logLevel = LogLevel.Headers, sanitize = !BuildConfig.DEBUG),
+        // LogLevel.None：任何情况下都不输出请求头（避免 Authorization 落入日志）
+        logging = LoggingConfig(logLevel = LogLevel.None),
         host = toOpenAIHost(withAzureDeploymentId = false),
         httpClientConfig = {
             if (isAzure) {
