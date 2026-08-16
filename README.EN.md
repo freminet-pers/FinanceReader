@@ -2,7 +2,7 @@
 
 [中文](README.md) | **English**
 
-A U.S. stock-market news reader with one-tap AI translation — subscribe to a handful of solid finance feeds, and turn English headlines into clean Chinese (or any language) without mangling the numbers, tickers, or terminology.
+A focused reader for U.S. stock-market news: a handful of solid finance feeds come pre-loaded, and English articles translate into clean Chinese in one tap — numbers, tickers, and terminology all come out right.
 
 It's built on top of the open-source reader [Feeder](https://github.com/spacecowboy/Feeder) (GPL-3.0). Feeder is already a clean, local RSS reader; we kept all of that and layered two things on top: finance content and translation.
 
