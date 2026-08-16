@@ -34,6 +34,18 @@ class ChunkTranslationContentTest {
     }
 
     @Test
+    fun htmlWithBreakVariantsSplitsWithoutCrash() {
+        // 回归：<br/> 变体曾触发「look-behind 必须有界」的 PatternSyntaxException
+        val block = "<p>Paragraph text with a line break<br/>continued here.</p>"
+        val content = block.repeat(80) // > 3000 chars
+        val chunks = chunkTranslationContent(content, preserveHtml = true)
+        assertTrue(chunks.size >= 2)
+        val normalized = content.replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "<br>")
+        assertEquals(normalized, chunks.joinToString(""))
+        assertTrue(chunks.all { it.length <= 3000 + 200 })
+    }
+
+    @Test
     fun oversizedSinglePieceIsHardSplit() {
         val longSentence = "This is a very long piece without any paragraph breaks. ".repeat(80)
         val content = longSentence + "Tail content."

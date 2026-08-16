@@ -360,4 +360,5 @@
     <string name="connection_test_failed">连接失败</string>
     <string name="https_required">接口地址必须使用 https://（仅本地地址允许 http）。</string>
     <string name="translation_content_empty">文章内容为空，请先抓取全文再翻译。</string>
+    <string name="translating">翻译中…</string>
 </resources>

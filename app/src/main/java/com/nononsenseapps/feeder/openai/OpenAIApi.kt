@@ -697,6 +697,16 @@ private const val RETRY_BACKOFF_MS = 1000L
 /** 可重试的 HTTP 状态码（限流与瞬时服务端错误）。 */
 private val RETRYABLE_STATUS_CODES = setOf(429, 500, 502, 503, 504)
 
+/** 分块哨兵：正常文本中几乎不可能出现的控制字符。 */
+private const val CHUNK_SENTINEL = "\u0001"
+
+/** HTML 块级结束标签（分块边界，标签随块保留）。 */
+private val HTML_BLOCK_TAG_REGEX =
+    Regex(
+        "(</p>|</li>|</h[1-6]>|<br>|</blockquote>|</tr>)",
+        RegexOption.IGNORE_CASE,
+    )
+
 /**
  * 长文分块：优先在块级边界（HTML 块级标签 / 空行 / 句号）切分，
  * 每块 ≤ [MAX_TRANSLATION_CHUNK_LENGTH] 字符，保证不切断标签与句子。
@@ -709,14 +719,27 @@ internal fun chunkTranslationContent(
         return listOf(content)
     }
 
-    val splitPattern =
+    // 注意：Java/Android 正则的 look-behind 必须有界，故 HTML 分支
+    // 不用 look-behind（如 (?<=<br\s*/?>) 会抛 PatternSyntaxException），
+    // 改为「规整 <br> 变体 → 块级标签后插哨兵 → 按哨兵切分」。
+    val pieces: List<String> =
         if (preserveHtml) {
-            Regex("(?<=</p>)|(?<=</li>)|(?<=</h[1-6]>)|(?<=<br\\s*/?>)|(?<=</blockquote>)|(?<=</tr>)")
+            val normalized =
+                content.replace(
+                    Regex("<br\\s*/?>", RegexOption.IGNORE_CASE),
+                    "<br>",
+                )
+            val marked =
+                HTML_BLOCK_TAG_REGEX.replace(normalized) { match ->
+                    match.value + CHUNK_SENTINEL
+                }
+            marked.split(CHUNK_SENTINEL).filter { it.isNotBlank() }
         } else {
-            Regex("(?<=\\n\\n)|(?<=[.!?]\\s)")
+            content
+                .split(Regex("(?<=\\n\\n)|(?<=[.!?]\\s)"))
+                .filter { it.isNotBlank() }
         }
 
-    val pieces = content.split(splitPattern).filter { it.isNotBlank() }
     val chunks = ArrayList<String>()
     val current = StringBuilder()
     for (piece in pieces) {

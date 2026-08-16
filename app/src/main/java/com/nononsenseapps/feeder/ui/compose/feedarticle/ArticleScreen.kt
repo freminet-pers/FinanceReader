@@ -672,9 +672,7 @@ fun ArticleContent(
             offsetCounter++
             viewState.translationModelDownloadProgress?.let { progress ->
                 TranslationModelDownloadProgress(progress)
-            } ?: LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth(),
-            )
+            } ?: TranslationLoadingSection()
         }
 
         if (viewState.openAiSummary !is OpenAISummaryState.Empty) {
@@ -768,6 +766,27 @@ private fun TranslationModelDownloadProgress(progress: BergamotModelDownloadProg
             progress = progress,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+@Composable
+private fun TranslationLoadingSection() {
+    // 与总结（SummarySection）同款素材：卡片 + 进度条 + 说明文字
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.translating),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            LinearProgressIndicator(
+                modifier =
+                    Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
+            )
+        }
     }
 }
 
