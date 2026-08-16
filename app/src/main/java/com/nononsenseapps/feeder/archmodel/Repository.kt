@@ -70,23 +70,25 @@ class Repository(
     private val fontStore: FontStore by instance()
 
     init {
-        addFeederNewsIfInitialStart()
+        addDefaultFeedsIfInitialStart()
     }
 
-    private fun addFeederNewsIfInitialStart() {
+    private fun addDefaultFeedsIfInitialStart() {
+        // 复用一个布尔开关做首启播种（含历史遗留的 Feeder News 标记位）。
         if (!settingsStore.addedFeederNews.value) {
             applicationCoroutineScope.launch {
-                val feedId =
+                DEFAULT_FINANCE_FEEDS.forEach { (title, url) ->
                     feedStore.upsertFeed(
                         Feed(
-                            title = "Feeder News",
-                            url = URL("https://news.nononsenseapps.com/index.atom"),
+                            title = title,
+                            url = URL(url),
                         ),
                     )
+                }
                 settingsStore.setAddedFeederNews(true)
+                // feedId 缺省 = 同步全部
                 runOnceRssSync(
                     di = di,
-                    feedId = feedId,
                     triggeredByUser = false,
                 )
             }
@@ -895,6 +897,21 @@ class Repository(
 
     companion object {
         private const val LOG_TAG = "FEEDER_REPO"
+
+        /**
+         * 首次启动预置的美股财经 RSS 源（2026-08 实测可访问，中国网络可用性最佳集合）。
+         * 来源调研见 DEV_PLAN.md Phase 2 与 research/ai-translation-research.md。
+         */
+        private val DEFAULT_FINANCE_FEEDS =
+            listOf(
+                "CNBC Top News" to "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+                "CNBC Markets" to "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+                "MarketWatch Top Stories" to "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+                "MarketWatch Market Pulse" to "https://feeds.content.dowjones.io/public/rss/mw_marketpulse",
+                "Seeking Alpha" to "https://seekingalpha.com/feed.xml",
+                "NPR Business" to "https://feeds.npr.org/1006/rss.xml",
+                "FRED Blog" to "https://fredblog.stlouisfed.org/feed/",
+            )
     }
 }
 
