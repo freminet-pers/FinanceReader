@@ -625,6 +625,11 @@ class ArticleViewModel(
                 }
 
                 val html = loadArticleHtml(article, fullText)
+                if (html.isBlank()) {
+                    toastMaker.makeToast(R.string.translation_content_empty)
+                    clearTranslatedContent()
+                    return@launch
+                }
                 val sourceLanguage =
                     detectArticleAlreadyInPreferredLanguage(
                         article = article,

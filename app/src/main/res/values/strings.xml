@@ -408,4 +408,5 @@
   <string name="connection_test_success">Connection successful</string>
   <string name="connection_test_failed">Connection failed</string>
   <string name="https_required">The endpoint must use https:// (only local addresses may use http).</string>
+  <string name="translation_content_empty">Article content is empty — fetch the full article first.</string>
 </resources>

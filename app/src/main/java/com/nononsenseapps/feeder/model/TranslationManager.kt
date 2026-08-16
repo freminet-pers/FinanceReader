@@ -16,6 +16,8 @@ import com.nononsenseapps.feeder.openai.isLocalTranslation
 import com.nononsenseapps.feeder.ui.compose.feed.FeedListItem
 import com.nononsenseapps.feeder.util.FilePathProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -36,6 +38,9 @@ class TranslationManager(
     private val localTranslator: LocalTranslator by instance()
     private val filePathProvider: FilePathProvider by instance()
     private val languageDetector = LanguageDetector(application)
+
+    /** 全局翻译互斥：同一时刻只允许 1 个翻译请求（控制费用与供应商限流）。 */
+    private val translationMutex = Mutex()
     private val json =
         Json {
             ignoreUnknownKeys = true
@@ -476,8 +481,7 @@ class TranslationManager(
         )
     }
 
-    private fun promptHash(settings: OpenAISettings): String =
-        sha256(settings.systemPrompt.ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT })
+    private fun promptHash(settings: OpenAISettings): String = sha256(settings.systemPrompt.ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT })
 
     private fun cacheFile(
         itemId: Long,
@@ -581,32 +585,34 @@ class TranslationManager(
         sourceLangHint: String,
         preserveHtml: Boolean,
     ): TranslationResult =
-        if (settings.isLocalTranslation) {
-            localTranslator.translate(
-                content = content,
-                targetLanguage = targetLanguage,
-                sourceLangHint = sourceLangHint,
-                preserveHtml = preserveHtml,
-            )
-        } else {
-            // 无显式源语言时用本机管线识别（OpenAI 兼容端点不返回源语言）
-            val effectiveHint =
-                sourceLangHint
-                    .trim()
-                    .ifBlank {
-                        languageDetector
-                            .detectLanguageTag(content)
-                            ?.let(languageDetector::languageName)
-                            .orEmpty()
-                    }
-            openAIApi.translate(
-                content = content,
-                targetLanguage = targetLanguage,
-                settings = settings,
-                preserveHtml = preserveHtml,
-                systemPrompt = settings.systemPrompt,
-                sourceLangHint = effectiveHint,
-            )
+        translationMutex.withLock {
+            if (settings.isLocalTranslation) {
+                localTranslator.translate(
+                    content = content,
+                    targetLanguage = targetLanguage,
+                    sourceLangHint = sourceLangHint,
+                    preserveHtml = preserveHtml,
+                )
+            } else {
+                // 无显式源语言时用本机管线识别（OpenAI 兼容端点不返回源语言）
+                val effectiveHint =
+                    sourceLangHint
+                        .trim()
+                        .ifBlank {
+                            languageDetector
+                                .detectLanguageTag(content)
+                                ?.let(languageDetector::languageName)
+                                .orEmpty()
+                        }
+                openAIApi.translate(
+                    content = content,
+                    targetLanguage = targetLanguage,
+                    settings = settings,
+                    preserveHtml = preserveHtml,
+                    systemPrompt = settings.systemPrompt,
+                    sourceLangHint = effectiveHint,
+                )
+            }
         }
 
     private fun detectSourceLanguageIfAlreadyTargetLanguage(

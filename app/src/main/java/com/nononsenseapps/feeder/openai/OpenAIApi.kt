@@ -5,12 +5,17 @@ import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatResponseFormat
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.chat.TextContent
+import com.aallam.openai.api.exception.OpenAIAPIException
+import com.aallam.openai.api.exception.OpenAITimeoutException
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAIHost
 import com.nononsenseapps.feeder.archmodel.OpenAISettings
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.takeFrom
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -19,6 +24,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class OpenAIApi(
@@ -280,33 +286,78 @@ class OpenAIApi(
         if (settings.baseUrl.isInsecureNonLocalUrl()) {
             return TranslationResult.Error(content = "The endpoint must use https://")
         }
-        return try {
-            val response =
-                openAIClientFactory(settings).chatCompletion(
-                    request =
-                        translationRequest(
-                            content = content,
-                            targetLanguage = targetLanguage,
-                            settings = settings,
-                            preserveHtml = preserveHtml,
-                            systemPrompt = systemPrompt,
-                            sourceLangHint = sourceLangHint,
-                        ),
-                    requestOptions = null,
-                )
-            val text =
-                response.choices
-                    .firstOrNull()
-                    ?.message
-                    ?.content
-                    ?.trim()
-                    .orEmpty()
-                    .ifBlank { throw IllegalStateException("Response content is null") }
-            // 源语言由本机语言识别管线判定（DeepL 路径才使用其返回值）
-            TranslationResult.Success(content = text, detectedLanguage = "")
-        } catch (e: Exception) {
-            TranslationResult.Error(content = e.messageOrCause().orEmpty())
+
+        // 长文按块级边界分块，串行翻译后合并（控制单请求 token 与失败面）
+        val chunks = chunkTranslationContent(content = content, preserveHtml = preserveHtml)
+        val translatedChunks = ArrayList<String>(chunks.size)
+        for (chunk in chunks) {
+            when (val result = translateChunkWithRetry(chunk, targetLanguage, settings, preserveHtml, systemPrompt, sourceLangHint)) {
+                is TranslationResult.Success -> translatedChunks += result.content
+                is TranslationResult.Error -> return result
+            }
         }
+        return TranslationResult.Success(
+            content = translatedChunks.joinToString(separator = if (preserveHtml) "\n" else "\n\n"),
+            detectedLanguage = "",
+        )
+    }
+
+    private suspend fun translateChunkWithRetry(
+        content: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+        preserveHtml: Boolean,
+        systemPrompt: String,
+        sourceLangHint: String,
+    ): TranslationResult {
+        var lastError = "Translation failed"
+        for (attempt in 0 until MAX_TRANSLATION_ATTEMPTS) {
+            try {
+                val response =
+                    openAIClientFactory(settings).chatCompletion(
+                        request =
+                            translationRequest(
+                                content = content,
+                                targetLanguage = targetLanguage,
+                                settings = settings,
+                                preserveHtml = preserveHtml,
+                                systemPrompt = systemPrompt,
+                                sourceLangHint = sourceLangHint,
+                            ),
+                        requestOptions = null,
+                    )
+                val text =
+                    response.choices
+                        .firstOrNull()
+                        ?.message
+                        ?.content
+                        ?.trim()
+                        .orEmpty()
+                if (text.isNotBlank()) {
+                    // 源语言由本机语言识别管线判定（DeepL 路径才使用其返回值）
+                    return TranslationResult.Success(content = text, detectedLanguage = "")
+                }
+                lastError = "Response content is null"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: OpenAIAPIException) {
+                // 4xx（除 429）为配置错误：快速失败，不重试
+                lastError = e.message ?: "HTTP ${e.statusCode}"
+                if (e.statusCode !in RETRYABLE_STATUS_CODES) {
+                    return TranslationResult.Error(content = lastError)
+                }
+            } catch (e: Exception) {
+                // 超时/IO 等瞬时错误可重试；其余（如本地逻辑错误）快速失败
+                if (e !is OpenAITimeoutException && e !is IOException && e !is HttpRequestTimeoutException) {
+                    return TranslationResult.Error(content = e.messageOrCause().orEmpty())
+                }
+                lastError = e.messageOrCause().orEmpty()
+            }
+            if (attempt < MAX_TRANSLATION_ATTEMPTS - 1) {
+                delay(RETRY_BACKOFF_MS * (attempt + 1L))
+            }
+        }
+        return TranslationResult.Error(content = lastError)
     }
 
     private fun translationRequest(
@@ -633,6 +684,71 @@ private fun OpenAISettings.normalizedDeepLBaseUrl(): String {
 }
 
 const val LOCAL_TRANSLATION_PROVIDER_URL = "local://translation"
+
+/** 单块最大字符数（约 1.5–2k token，保证分块译文质量与上下文完整）。 */
+private const val MAX_TRANSLATION_CHUNK_LENGTH = 3000
+
+/** 每块最多尝试次数。 */
+private const val MAX_TRANSLATION_ATTEMPTS = 3
+
+/** 重试退避基数（毫秒）。 */
+private const val RETRY_BACKOFF_MS = 1000L
+
+/** 可重试的 HTTP 状态码（限流与瞬时服务端错误）。 */
+private val RETRYABLE_STATUS_CODES = setOf(429, 500, 502, 503, 504)
+
+/**
+ * 长文分块：优先在块级边界（HTML 块级标签 / 空行 / 句号）切分，
+ * 每块 ≤ [MAX_TRANSLATION_CHUNK_LENGTH] 字符，保证不切断标签与句子。
+ */
+internal fun chunkTranslationContent(
+    content: String,
+    preserveHtml: Boolean,
+): List<String> {
+    if (content.length <= MAX_TRANSLATION_CHUNK_LENGTH) {
+        return listOf(content)
+    }
+
+    val splitPattern =
+        if (preserveHtml) {
+            Regex("(?<=</p>)|(?<=</li>)|(?<=</h[1-6]>)|(?<=<br\\s*/?>)|(?<=</blockquote>)|(?<=</tr>)")
+        } else {
+            Regex("(?<=\\n\\n)|(?<=[.!?]\\s)")
+        }
+
+    val pieces = content.split(splitPattern).filter { it.isNotBlank() }
+    val chunks = ArrayList<String>()
+    val current = StringBuilder()
+    for (piece in pieces) {
+        if (current.isNotEmpty() && current.length + piece.length > MAX_TRANSLATION_CHUNK_LENGTH) {
+            chunks += current.toString()
+            current.clear()
+        }
+        // 单段超长时按句号硬切（保底）
+        if (piece.length > MAX_TRANSLATION_CHUNK_LENGTH) {
+            var rest = piece
+            while (rest.length > MAX_TRANSLATION_CHUNK_LENGTH) {
+                val cut =
+                    rest
+                        .lastIndexOf(". ", MAX_TRANSLATION_CHUNK_LENGTH)
+                        .coerceAtLeast(MAX_TRANSLATION_CHUNK_LENGTH / 2)
+                if (current.isNotEmpty()) {
+                    chunks += current.toString()
+                    current.clear()
+                }
+                chunks += rest.substring(0, cut + 1).trim()
+                rest = rest.substring(cut + 1).trimStart()
+            }
+            current.append(rest)
+        } else {
+            current.append(piece)
+        }
+    }
+    if (current.isNotBlank()) {
+        chunks += current.toString()
+    }
+    return chunks.ifEmpty { listOf(content) }
+}
 
 /**
  * 明文 http 且非本地/内网地址（本地调试与局域网自建服务放行）。
