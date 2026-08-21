@@ -363,4 +363,18 @@
     <string name="translating">翻译中…</string>
     <string name="translate_short">翻译</string>
     <string name="show_original_short">显示原文</string>
+
+    <string name="translation_progress_translating">正在翻译 %1$d 篇…</string>
+    <string name="translation_progress_summary">翻译中 %1$d 篇 · 已完成 %2$d 篇</string>
+    <string name="translation_progress_done">已翻译 %1$d 篇</string>
+    <string name="translation_progress_failed">%1$d 篇失败</string>
+    <string name="translation_progress_show_details">查看翻译详情</string>
+    <string name="translation_progress_hide_details">收起翻译详情</string>
+    <string name="translation_progress_empty">当前没有正在翻译的文章</string>
+    <string name="translation_progress_status_translating">翻译中…</string>
+    <string name="translation_progress_status_done">已完成</string>
+    <string name="translation_progress_status_failed">失败</string>
+    <string name="translated_article_indicator">已翻译的文章</string>
+    <string name="translated_article_read">已翻译且已读</string>
+    <string name="translated_article_unread">已翻译，未读</string>
 </resources>

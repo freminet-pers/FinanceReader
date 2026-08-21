@@ -38,6 +38,7 @@ class TranslationManager(
     private val localTranslator: LocalTranslator by instance()
     private val filePathProvider: FilePathProvider by instance()
     private val languageDetector = LanguageDetector(application)
+    private val translationProgressStore: TranslationProgressStore by instance()
 
     /** 全局翻译互斥：同一时刻只允许 1 个翻译请求（控制费用与供应商限流）。 */
     private val translationMutex = Mutex()
@@ -115,146 +116,82 @@ class TranslationManager(
                 return@withContext item
             }
 
-            val cache = loadCache(item.id, settings, targetLanguage)
-            val titleHash = sha256(item.title)
-            val snippetHash = sha256(item.snippet)
-            val cachedTitle =
-                cache.translatedTitle.takeIf {
-                    cache.titleHash == titleHash &&
-                        it.isUsableCachedTranslation(
-                            original = item.title,
-                            sourceLanguage = cache.sourceLanguage,
-                            targetLanguage = targetLanguage,
-                            settings = settings,
-                        )
-                }
-            val cachedSnippet =
-                cache.translatedSnippet.takeIf {
-                    cache.snippetHash == snippetHash &&
-                        it.isUsableCachedTranslation(
-                            original = item.snippet,
-                            sourceLanguage = cache.sourceLanguage,
-                            targetLanguage = targetLanguage,
-                            settings = settings,
-                        )
-                }
+            translationProgressStore.startJob(item.id, item.title)
+            try {
+                translateFeedListItemInternal(item, settings, targetLanguage)
+            } finally {
+                // 卡片翻译只上报「已结束」；正文翻译的成功标记在 getOrTranslateArticle 单独处理
+                translationProgressStore.finishJob(item.id, success = true)
+            }
+        }
 
-            val titleReady = item.title.isBlank() || cachedTitle != null
-            val snippetReady = item.snippet.isBlank() || cachedSnippet != null
-            if (titleReady && snippetReady) {
-                return@withContext item.copy(
-                    title = cachedTitle ?: item.title,
-                    snippet = cachedSnippet ?: item.snippet,
+    private suspend fun translateFeedListItemInternal(
+        item: FeedListItem,
+        settings: TranslationApiSettings,
+        targetLanguage: String,
+    ): FeedListItem {
+        val cache = loadCache(item.id, settings, targetLanguage)
+        val titleHash = sha256(item.title)
+        val snippetHash = sha256(item.snippet)
+        val cachedTitle =
+            cache.translatedTitle.takeIf {
+                cache.titleHash == titleHash &&
+                    it.isUsableCachedTranslation(
+                        original = item.title,
+                        sourceLanguage = cache.sourceLanguage,
+                        targetLanguage = targetLanguage,
+                        settings = settings,
+                    )
+            }
+        val cachedSnippet =
+            cache.translatedSnippet.takeIf {
+                cache.snippetHash == snippetHash &&
+                    it.isUsableCachedTranslation(
+                        original = item.snippet,
+                        sourceLanguage = cache.sourceLanguage,
+                        targetLanguage = targetLanguage,
+                        settings = settings,
+                    )
+            }
+
+        val titleReady = item.title.isBlank() || cachedTitle != null
+        val snippetReady = item.snippet.isBlank() || cachedSnippet != null
+        if (titleReady && snippetReady) {
+            return item.copy(
+                title = cachedTitle ?: item.title,
+                snippet = cachedSnippet ?: item.snippet,
+            )
+        }
+        val cachedSourceLanguage =
+            if (cachedTitle != null || cachedSnippet != null) {
+                cache.sourceLanguage
+            } else {
+                ""
+            }
+        // 用户手动指定源语言时信任用户，跳过“已是目标语言”检测
+        val manualSourceLanguage = manualSourceLanguageName()
+        val detectedSameLanguage =
+            if (manualSourceLanguage == null) {
+                detectSourceLanguageIfAlreadyTargetLanguage(
+                    content =
+                        listOf(item.title, item.snippet)
+                            .filter(String::isNotBlank)
+                            .joinToString(separator = "\n\n"),
+                    targetLanguage = targetLanguage,
+                    settings = settings,
                 )
+            } else {
+                null
             }
-            val cachedSourceLanguage =
-                if (cachedTitle != null || cachedSnippet != null) {
-                    cache.sourceLanguage
-                } else {
-                    ""
-                }
-            // 用户手动指定源语言时信任用户，跳过“已是目标语言”检测
-            val manualSourceLanguage = manualSourceLanguageName()
-            val detectedSameLanguage =
-                if (manualSourceLanguage == null) {
-                    detectSourceLanguageIfAlreadyTargetLanguage(
-                        content =
-                            listOf(item.title, item.snippet)
-                                .filter(String::isNotBlank)
-                                .joinToString(separator = "\n\n"),
-                        targetLanguage = targetLanguage,
-                        settings = settings,
-                    )
-                } else {
-                    null
-                }
-            if (detectedSameLanguage != null) {
-                val updatedCache =
-                    cache.copy(
-                        sourceLanguage = detectedSameLanguage,
-                        titleHash = if (item.title.isBlank()) null else titleHash,
-                        translatedTitle = if (item.title.isBlank()) null else item.title,
-                        snippetHash = if (item.snippet.isBlank()) null else snippetHash,
-                        translatedSnippet = if (item.snippet.isBlank()) null else item.snippet,
-                    )
-                if (updatedCache != cache) {
-                    saveCache(
-                        item.id,
-                        settings,
-                        targetLanguage,
-                        updatedCache,
-                    )
-                }
-                return@withContext item
-            }
-
-            val translatedSnippetResult =
-                if (item.snippet.isBlank() || cachedSnippet != null) {
-                    null
-                } else {
-                    translateOrNull(
-                        content = item.snippet,
-                        targetLanguage = targetLanguage,
-                        settings = settings,
-                        sourceLangHint = manualSourceLanguage ?: cachedSourceLanguage,
-                    )
-                }
-            val translatedSnippet = cachedSnippet ?: translatedSnippetResult?.content.orEmpty()
-            val sourceLanguageHint =
-                translatedSnippetResult
-                    ?.detectedLanguageOrBlank()
-                    .orEmpty()
-                    .ifBlank { cachedSourceLanguage }
-
-            val translatedTitleResult =
-                if (item.title.isBlank() || cachedTitle != null) {
-                    null
-                } else {
-                    translateOrNull(
-                        content = item.title,
-                        targetLanguage = targetLanguage,
-                        settings = settings,
-                        sourceLangHint = manualSourceLanguage ?: sourceLanguageHint,
-                    )
-                }
-            val translatedTitle = cachedTitle ?: translatedTitleResult?.content.orEmpty()
-            val sourceLanguage =
-                manualSourceLanguage
-                    ?: translatedSnippetResult
-                        ?.detectedLanguageOrBlank()
-                        .orEmpty()
-                        .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
-                        .ifBlank { cachedSourceLanguage }
-
+        if (detectedSameLanguage != null) {
             val updatedCache =
                 cache.copy(
-                    sourceLanguage = sourceLanguage.ifBlank { cachedSourceLanguage },
-                    titleHash =
-                        when {
-                            item.title.isBlank() -> null
-                            translatedTitle.isNotBlank() -> titleHash
-                            else -> cache.titleHash
-                        },
-                    translatedTitle =
-                        when {
-                            item.title.isBlank() -> null
-                            translatedTitle.isNotBlank() -> translatedTitle
-                            else -> cache.translatedTitle
-                        },
-                    snippetHash =
-                        when {
-                            item.snippet.isBlank() -> null
-                            translatedSnippet.isNotBlank() -> snippetHash
-                            else -> cache.snippetHash
-                        },
-                    translatedSnippet =
-                        when {
-                            item.snippet.isBlank() -> null
-                            translatedSnippet.isNotBlank() -> translatedSnippet
-                            else -> cache.translatedSnippet
-                        },
+                    sourceLanguage = detectedSameLanguage,
+                    titleHash = if (item.title.isBlank()) null else titleHash,
+                    translatedTitle = if (item.title.isBlank()) null else item.title,
+                    snippetHash = if (item.snippet.isBlank()) null else snippetHash,
+                    translatedSnippet = if (item.snippet.isBlank()) null else item.snippet,
                 )
-
             if (updatedCache != cache) {
                 saveCache(
                     item.id,
@@ -263,12 +200,90 @@ class TranslationManager(
                     updatedCache,
                 )
             }
+            return item
+        }
 
-            item.copy(
-                title = translatedTitle.ifBlank { item.title },
-                snippet = translatedSnippet.ifBlank { item.snippet },
+        val translatedSnippetResult =
+            if (item.snippet.isBlank() || cachedSnippet != null) {
+                null
+            } else {
+                translateOrNull(
+                    content = item.snippet,
+                    targetLanguage = targetLanguage,
+                    settings = settings,
+                    sourceLangHint = manualSourceLanguage ?: cachedSourceLanguage,
+                )
+            }
+        val translatedSnippet = cachedSnippet ?: translatedSnippetResult?.content.orEmpty()
+        val sourceLanguageHint =
+            translatedSnippetResult
+                ?.detectedLanguageOrBlank()
+                .orEmpty()
+                .ifBlank { cachedSourceLanguage }
+
+        val translatedTitleResult =
+            if (item.title.isBlank() || cachedTitle != null) {
+                null
+            } else {
+                translateOrNull(
+                    content = item.title,
+                    targetLanguage = targetLanguage,
+                    settings = settings,
+                    sourceLangHint = manualSourceLanguage ?: sourceLanguageHint,
+                )
+            }
+        val translatedTitle = cachedTitle ?: translatedTitleResult?.content.orEmpty()
+        val sourceLanguage =
+            manualSourceLanguage
+                ?: translatedSnippetResult
+                    ?.detectedLanguageOrBlank()
+                    .orEmpty()
+                    .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
+                    .ifBlank { cachedSourceLanguage }
+
+        val updatedCache =
+            cache.copy(
+                sourceLanguage = sourceLanguage.ifBlank { cachedSourceLanguage },
+                titleHash =
+                    when {
+                        item.title.isBlank() -> null
+                        translatedTitle.isNotBlank() -> titleHash
+                        else -> cache.titleHash
+                    },
+                translatedTitle =
+                    when {
+                        item.title.isBlank() -> null
+                        translatedTitle.isNotBlank() -> translatedTitle
+                        else -> cache.translatedTitle
+                    },
+                snippetHash =
+                    when {
+                        item.snippet.isBlank() -> null
+                        translatedSnippet.isNotBlank() -> snippetHash
+                        else -> cache.snippetHash
+                    },
+                translatedSnippet =
+                    when {
+                        item.snippet.isBlank() -> null
+                        translatedSnippet.isNotBlank() -> translatedSnippet
+                        else -> cache.translatedSnippet
+                    },
+            )
+
+        if (updatedCache != cache) {
+            saveCache(
+                item.id,
+                settings,
+                targetLanguage,
+                updatedCache,
             )
         }
+
+        return item.copy(
+            title = translatedTitle.ifBlank { item.title },
+            snippet = translatedSnippet.ifBlank { item.snippet },
+        )
+    }
 
     suspend fun getOrTranslateArticle(
         itemId: Long,
@@ -283,117 +298,141 @@ class TranslationManager(
                 return@withContext null
             }
 
-            val cache = loadCache(itemId, settings, targetLanguage)
-            val titleHash = sha256(title)
-            val htmlHash = sha256(html)
+            translationProgressStore.startJob(itemId, title)
+            try {
+                getOrTranslateArticleInternal(itemId, title, html, isFullText, settings, targetLanguage)
+            } catch (t: Throwable) {
+                translationProgressStore.finishJob(itemId, success = false)
+                throw t
+            }
+        }
 
-            val cachedHtml =
-                if (isFullText) {
-                    cache.translatedFullArticleHtml.takeIf { cache.fullArticleHtmlHash == htmlHash }
-                } else {
-                    cache.translatedArticleHtml.takeIf { cache.articleHtmlHash == htmlHash }
-                }
-            val cachedTitle =
-                cache.translatedTitle.takeIf {
-                    cache.titleHash == titleHash &&
-                        it.isUsableCachedTranslation(
-                            original = title,
-                            sourceLanguage = cache.sourceLanguage,
-                            targetLanguage = targetLanguage,
-                            settings = settings,
-                        )
-                }
+    private suspend fun getOrTranslateArticleInternal(
+        itemId: Long,
+        title: String,
+        html: String,
+        isFullText: Boolean,
+        settings: OpenAISettings,
+        targetLanguage: String,
+    ): ArticleTranslation {
+        val cache = loadCache(itemId, settings, targetLanguage)
+        val titleHash = sha256(title)
+        val htmlHash = sha256(html)
 
-            if (cachedHtml != null && cachedTitle != null) {
-                return@withContext ArticleTranslation(
-                    translatedTitle = cachedTitle,
-                    translatedHtml = cachedHtml,
-                    sourceLanguage = cache.sourceLanguage,
-                )
+        val cachedHtml =
+            if (isFullText) {
+                cache.translatedFullArticleHtml.takeIf { cache.fullArticleHtmlHash == htmlHash }
+            } else {
+                cache.translatedArticleHtml.takeIf { cache.articleHtmlHash == htmlHash }
+            }
+        val cachedTitle =
+            cache.translatedTitle.takeIf {
+                cache.titleHash == titleHash &&
+                    it.isUsableCachedTranslation(
+                        original = title,
+                        sourceLanguage = cache.sourceLanguage,
+                        targetLanguage = targetLanguage,
+                        settings = settings,
+                    )
             }
 
-            val manualSourceLanguage = manualSourceLanguageName()
-            val detectedSameLanguage =
-                if (manualSourceLanguage == null) {
-                    detectArticleAlreadyInTargetLanguage(
-                        itemId = itemId,
-                        title = title,
-                        html = html,
-                        isFullText = isFullText,
-                        settings = settings,
-                        targetLanguage = targetLanguage,
-                        existingCache = cache,
-                    )
-                } else {
-                    null
-                }
-            if (detectedSameLanguage != null) {
-                return@withContext ArticleTranslation(
-                    translatedTitle = title,
-                    translatedHtml = html,
-                    sourceLanguage = detectedSameLanguage,
-                )
-            }
-            val cachedSourceLanguage = cache.sourceLanguage
-
-            val translatedHtmlResult =
-                if (cachedHtml != null) {
-                    null
-                } else {
-                    translateOrThrow(
-                        content = html,
-                        targetLanguage = targetLanguage,
-                        settings = settings,
-                        sourceLangHint = manualSourceLanguage ?: cachedSourceLanguage,
-                        preserveHtml = true,
-                    )
-                }
-            val sourceLanguageHint =
-                translatedHtmlResult
-                    ?.detectedLanguageOrBlank()
-                    .orEmpty()
-                    .ifBlank { cachedSourceLanguage }
-
-            val translatedTitleResult =
-                if (cachedTitle != null) {
-                    null
-                } else {
-                    translateOrThrow(
-                        content = title,
-                        targetLanguage = targetLanguage,
-                        settings = settings,
-                        sourceLangHint = manualSourceLanguage ?: sourceLanguageHint,
-                    )
-                }
-            val translatedTitle = cachedTitle ?: translatedTitleResult?.content.orEmpty().ifBlank { title }
-            val translatedHtml = cachedHtml ?: translatedHtmlResult?.content.orEmpty().ifBlank { html }
-            val sourceLanguage =
-                manualSourceLanguage
-                    ?: translatedHtmlResult
-                        ?.detectedLanguageOrBlank()
-                        .orEmpty()
-                        .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
-                        .ifBlank { cachedSourceLanguage }
-
-            val updatedCache =
-                cache.copy(
-                    sourceLanguage = sourceLanguage.ifBlank { cachedSourceLanguage },
-                    titleHash = titleHash,
-                    translatedTitle = translatedTitle,
-                    articleHtmlHash = if (!isFullText) htmlHash else cache.articleHtmlHash,
-                    translatedArticleHtml = if (!isFullText) translatedHtml else cache.translatedArticleHtml,
-                    fullArticleHtmlHash = if (isFullText) htmlHash else cache.fullArticleHtmlHash,
-                    translatedFullArticleHtml = if (isFullText) translatedHtml else cache.translatedFullArticleHtml,
-                )
-
-            saveCache(itemId, settings, targetLanguage, updatedCache)
-
-            ArticleTranslation(
-                translatedTitle = translatedTitle,
-                translatedHtml = translatedHtml,
-                sourceLanguage = sourceLanguage,
+        if (cachedHtml != null && cachedTitle != null) {
+            translationProgressStore.markTranslated(itemId)
+            translationProgressStore.finishJob(itemId, success = true)
+            return ArticleTranslation(
+                translatedTitle = cachedTitle,
+                translatedHtml = cachedHtml,
+                sourceLanguage = cache.sourceLanguage,
             )
         }
+
+        val manualSourceLanguage = manualSourceLanguageName()
+        val detectedSameLanguage =
+            if (manualSourceLanguage == null) {
+                detectArticleAlreadyInTargetLanguage(
+                    itemId = itemId,
+                    title = title,
+                    html = html,
+                    isFullText = isFullText,
+                    settings = settings,
+                    targetLanguage = targetLanguage,
+                    existingCache = cache,
+                )
+            } else {
+                null
+            }
+        if (detectedSameLanguage != null) {
+            translationProgressStore.finishJob(itemId, success = true)
+            return ArticleTranslation(
+                translatedTitle = title,
+                translatedHtml = html,
+                sourceLanguage = detectedSameLanguage,
+            )
+        }
+        val cachedSourceLanguage = cache.sourceLanguage
+
+        val translatedHtmlResult =
+            if (cachedHtml != null) {
+                null
+            } else {
+                translateOrThrow(
+                    content = html,
+                    targetLanguage = targetLanguage,
+                    settings = settings,
+                    sourceLangHint = manualSourceLanguage ?: cachedSourceLanguage,
+                    preserveHtml = true,
+                )
+            }
+        val sourceLanguageHint =
+            translatedHtmlResult
+                ?.detectedLanguageOrBlank()
+                .orEmpty()
+                .ifBlank { cachedSourceLanguage }
+
+        val translatedTitleResult =
+            if (cachedTitle != null) {
+                null
+            } else {
+                translateOrThrow(
+                    content = title,
+                    targetLanguage = targetLanguage,
+                    settings = settings,
+                    sourceLangHint = manualSourceLanguage ?: sourceLanguageHint,
+                )
+            }
+        val translatedTitle = cachedTitle ?: translatedTitleResult?.content.orEmpty().ifBlank { title }
+        val translatedHtml = cachedHtml ?: translatedHtmlResult?.content.orEmpty().ifBlank { html }
+        val sourceLanguage =
+            manualSourceLanguage
+                ?: translatedHtmlResult
+                    ?.detectedLanguageOrBlank()
+                    .orEmpty()
+                    .ifBlank { translatedTitleResult?.detectedLanguageOrBlank().orEmpty() }
+                    .ifBlank { cachedSourceLanguage }
+
+        val updatedCache =
+            cache.copy(
+                sourceLanguage = sourceLanguage.ifBlank { cachedSourceLanguage },
+                titleHash = titleHash,
+                translatedTitle = translatedTitle,
+                articleHtmlHash = if (!isFullText) htmlHash else cache.articleHtmlHash,
+                translatedArticleHtml = if (!isFullText) translatedHtml else cache.translatedArticleHtml,
+                fullArticleHtmlHash = if (isFullText) htmlHash else cache.fullArticleHtmlHash,
+                translatedFullArticleHtml = if (isFullText) translatedHtml else cache.translatedFullArticleHtml,
+            )
+
+        saveCache(itemId, settings, targetLanguage, updatedCache)
+
+        // 正文翻译成功：标记「已翻译」并结束进度任务
+        translationProgressStore.markTranslated(itemId)
+        translationProgressStore.finishJob(itemId, success = true)
+
+        return ArticleTranslation(
+            translatedTitle = translatedTitle,
+            translatedHtml = translatedHtml,
+            sourceLanguage = sourceLanguage,
+        )
+    }
 
     suspend fun hasCachedTranslatedArticle(
         itemId: Long,

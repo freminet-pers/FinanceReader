@@ -412,4 +412,18 @@
   <string name="translating">Translating…</string>
   <string name="translate_short">Translate</string>
   <string name="show_original_short">Show original</string>
+
+  <string name="translation_progress_translating">Translating %1$d article(s)…</string>
+  <string name="translation_progress_summary">Translating %1$d · done %2$d</string>
+  <string name="translation_progress_done">Translated %1$d article(s)</string>
+  <string name="translation_progress_failed">%1$d failed</string>
+  <string name="translation_progress_show_details">Show translation details</string>
+  <string name="translation_progress_hide_details">Hide translation details</string>
+  <string name="translation_progress_empty">No active translations</string>
+  <string name="translation_progress_status_translating">Translating…</string>
+  <string name="translation_progress_status_done">Done</string>
+  <string name="translation_progress_status_failed">Failed</string>
+  <string name="translated_article_indicator">Translated article</string>
+  <string name="translated_article_read">Translated and read</string>
+  <string name="translated_article_unread">Translated, unread</string>
 </resources>

@@ -30,7 +30,9 @@ import com.nononsenseapps.feeder.model.PlaybackStatus
 import com.nononsenseapps.feeder.model.PodcastPlayerState
 import com.nononsenseapps.feeder.model.PodcastPlayerStateHolder
 import com.nononsenseapps.feeder.model.TTSStateHolder
+import com.nononsenseapps.feeder.model.TranslationJob
 import com.nononsenseapps.feeder.model.TranslationManager
+import com.nononsenseapps.feeder.model.TranslationProgressStore
 import com.nononsenseapps.feeder.openai.canUseAsTranslationApi
 import com.nononsenseapps.feeder.openai.isLocalTranslation
 import com.nononsenseapps.feeder.ui.compose.feed.FeedListItem
@@ -65,6 +67,7 @@ class FeedViewModel(
     private val podcastPlayerStateHolder: PodcastPlayerStateHolder by instance()
     private val filePathProvider: FilePathProvider by instance()
     private val translationManager: TranslationManager by instance()
+    private val translationProgressStore: TranslationProgressStore by instance()
     private val bergamotModelManager: BergamotModelManager by instance()
     private val localTranslator: LocalTranslator by instance()
 
@@ -90,6 +93,16 @@ class FeedViewModel(
             TranslatedFeedCards(),
         )
     private val inFlightFeedCardTranslations = ConcurrentHashMap.newKeySet<FeedCardTranslationRequest>()
+
+    /** 全局翻译进度任务（列表顶部小 UI 与详情）。 */
+    val translationJobs: StateFlow<List<TranslationJob>> = translationProgressStore.jobs
+
+    /** 已翻译（正文）的文章 ID 集合，用于列表小圆点标记。 */
+    val translatedItemIds: StateFlow<Set<Long>> = translationProgressStore.translatedItemIds
+
+    fun dismissFinishedTranslationJobs() {
+        translationProgressStore.dismissFinishedJobs()
+    }
 
     val pagedNavDrawerItems: Flow<PagingData<FeedUnreadCount>> =
         repository

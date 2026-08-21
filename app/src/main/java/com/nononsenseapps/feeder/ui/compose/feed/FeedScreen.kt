@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -73,6 +74,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -117,6 +119,7 @@ import com.nononsenseapps.feeder.db.room.ID_SAVED_ARTICLES
 import com.nononsenseapps.feeder.db.room.ID_UNSET
 import com.nononsenseapps.feeder.localtranslation.BergamotModelDownloadProgress
 import com.nononsenseapps.feeder.model.LocaleOverride
+import com.nononsenseapps.feeder.model.TranslationJob
 import com.nononsenseapps.feeder.model.export.exportSavedArticles
 import com.nononsenseapps.feeder.model.export.importSavedArticles
 import com.nononsenseapps.feeder.model.opml.exportOpml
@@ -181,6 +184,8 @@ fun FeedScreen(
     val toastMaker: ToastMaker by instance()
     val viewState: FeedScreenViewState by viewModel.viewState.collectAsStateWithLifecycle()
     val translatedFeedCards by viewModel.translatedFeedCards.collectAsStateWithLifecycle()
+    val translationJobs by viewModel.translationJobs.collectAsStateWithLifecycle()
+    val translatedItemIds by viewModel.translatedItemIds.collectAsStateWithLifecycle()
     val pagedFeedItems = viewModel.currentFeedListItems.collectAsLazyPagingItems()
     val pagedNavDrawerItems = viewModel.pagedNavDrawerItems.collectAsLazyPagingItems()
 
@@ -512,6 +517,9 @@ fun FeedScreen(
             pagedFeedItems = pagedFeedItems,
             translatedFeedCards = translatedFeedCards,
             onTranslateFeedCard = viewModel::translateFeedCardIfNeeded,
+            translationJobs = translationJobs,
+            translatedItemIds = translatedItemIds,
+            onDismissTranslationProgress = viewModel::dismissFinishedTranslationJobs,
         )
     }
 }
@@ -569,6 +577,9 @@ fun FeedScreen(
     pagedFeedItems: LazyPagingItems<FeedListItem>,
     translatedFeedCards: TranslatedFeedCards,
     onTranslateFeedCard: (FeedListItem) -> Unit,
+    translationJobs: List<TranslationJob>,
+    translatedItemIds: Set<Long>,
+    onDismissTranslationProgress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -1067,6 +1078,9 @@ fun FeedScreen(
                     pagedFeedItems = pagedFeedItems,
                     translatedFeedCards = translatedFeedCards,
                     onTranslateFeedCard = onTranslateFeedCard,
+                    translationJobs = translationJobs,
+                    translatedItemIds = translatedItemIds,
+                    onDismissTranslationProgress = onDismissTranslationProgress,
                     modifier = innerModifier,
                 )
 
@@ -1096,6 +1110,9 @@ fun FeedScreen(
                     pagedFeedItems = pagedFeedItems,
                     translatedFeedCards = translatedFeedCards,
                     onTranslateFeedCard = onTranslateFeedCard,
+                    translationJobs = translationJobs,
+                    translatedItemIds = translatedItemIds,
+                    onDismissTranslationProgress = onDismissTranslationProgress,
                     modifier = innerModifier,
                 )
         }
@@ -1371,6 +1388,9 @@ fun FeedListContent(
     pagedFeedItems: LazyPagingItems<FeedListItem>,
     translatedFeedCards: TranslatedFeedCards,
     onTranslateFeedCard: (FeedListItem) -> Unit,
+    translationJobs: List<TranslationJob>,
+    translatedItemIds: Set<Long>,
+    onDismissTranslationProgress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -1410,206 +1430,217 @@ fun FeedListContent(
             exit = fadeOut(),
             visible = viewState.haveVisibleFeedItems,
         ) {
-            LazyColumn(
-                state = listState,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = arrangement,
-                contentPadding =
-                    if (viewState.isBottomBarVisible) {
-                        PaddingValues(0.dp)
-                    } else {
-                        WindowInsets.navigationBars
-                            .only(
-                                WindowInsetsSides.Bottom,
-                            ).run {
-                                when (viewState.feedItemStyle) {
-                                    FeedItemStyle.CARD -> addMargin(horizontal = LocalDimens.current.margin)
-                                    FeedItemStyle.COMPACT_CARD -> addMargin(horizontal = LocalDimens.current.margin)
-                                    // No margin since dividers
-                                    FeedItemStyle.COMPACT, FeedItemStyle.SUPER_COMPACT -> this
-                                }
-                            }.asPaddingValues()
-                    },
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .safeSemantics {
-                            testTag = "feed_list"
-                            collectionInfo = CollectionInfo(pagedFeedItems.itemCount, 1)
+            CompositionLocalProvider(LocalTranslatedItemIds provides translatedItemIds) {
+                LazyColumn(
+                    state = listState,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = arrangement,
+                    contentPadding =
+                        if (viewState.isBottomBarVisible) {
+                            PaddingValues(0.dp)
+                        } else {
+                            WindowInsets.navigationBars
+                                .only(
+                                    WindowInsetsSides.Bottom,
+                                ).run {
+                                    when (viewState.feedItemStyle) {
+                                        FeedItemStyle.CARD -> addMargin(horizontal = LocalDimens.current.margin)
+                                        FeedItemStyle.COMPACT_CARD -> addMargin(horizontal = LocalDimens.current.margin)
+                                        // No margin since dividers
+                                        FeedItemStyle.COMPACT, FeedItemStyle.SUPER_COMPACT -> this
+                                    }
+                                }.asPaddingValues()
                         },
-            ) {
-                /*
-                This is a trick to make the list stay at item 0 when updates come in IF it is
-                scrolled to the top.
-                 */
-                item(
-                    key = "SpacerScrollTrick",
-                    contentType = "SpacerScrollTrick",
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .safeSemantics {
+                                testTag = "feed_list"
+                                collectionInfo = CollectionInfo(pagedFeedItems.itemCount, 1)
+                            },
                 ) {
-                    Spacer(modifier = Modifier.fillMaxWidth())
-                }
-                items(
-                    count = pagedFeedItems.itemCount,
-                    key = pagedFeedItems.itemKey { it.id },
-                    contentType = pagedFeedItems.itemContentType { it.contentType(viewState.feedItemStyle) },
-                ) { itemIndex ->
-                    val loadedItem = pagedFeedItems[itemIndex] ?: PLACEHOLDER_ITEM
-                    val previewItem = translatedFeedCards.merge(loadedItem)
-
-                    val itemCoroutineScope = rememberCoroutineScope()
-                    var itemWasVisible by remember(previewItem.id) { mutableStateOf(false) }
-
-                    LaunchedEffect(loadedItem.id, loadedItem.title, loadedItem.snippet, translatedFeedCards.generation, onTranslateFeedCard) {
-                        onTranslateFeedCard(loadedItem)
+                    item(
+                        key = "TranslationProgressOverview",
+                        contentType = "TranslationProgressOverview",
+                    ) {
+                        TranslationProgressOverview(
+                            jobs = translationJobs,
+                            onDismiss = onDismissTranslationProgress,
+                        )
                     }
+                    /*
+                    This is a trick to make the list stay at item 0 when updates come in IF it is
+                    scrolled to the top.
+                     */
+                    item(
+                        key = "SpacerScrollTrick",
+                        contentType = "SpacerScrollTrick",
+                    ) {
+                        Spacer(modifier = Modifier.fillMaxWidth())
+                    }
+                    items(
+                        count = pagedFeedItems.itemCount,
+                        key = pagedFeedItems.itemKey { it.id },
+                        contentType = pagedFeedItems.itemContentType { it.contentType(viewState.feedItemStyle) },
+                    ) { itemIndex ->
+                        val loadedItem = pagedFeedItems[itemIndex] ?: PLACEHOLDER_ITEM
+                        val previewItem = translatedFeedCards.merge(loadedItem)
 
-                    // Gets executed when only unread items are being shown
-                    // Marks items which have been visible as read when they scroll off screen
-                    DisposableEffect(previewItem.id, markAsUnread) {
-                        onDispose {
-                            if (itemWasVisible) {
-                                coroutineScope.launch {
-                                    logDebug(LOG_TAG, "Marking ${previewItem.id} as read")
-                                    markAsUnread(previewItem.id, false)
+                        val itemCoroutineScope = rememberCoroutineScope()
+                        var itemWasVisible by remember(previewItem.id) { mutableStateOf(false) }
+
+                        LaunchedEffect(loadedItem.id, loadedItem.title, loadedItem.snippet, translatedFeedCards.generation, onTranslateFeedCard) {
+                            onTranslateFeedCard(loadedItem)
+                        }
+
+                        // Gets executed when only unread items are being shown
+                        // Marks items which have been visible as read when they scroll off screen
+                        DisposableEffect(previewItem.id, markAsUnread) {
+                            onDispose {
+                                if (itemWasVisible) {
+                                    coroutineScope.launch {
+                                        logDebug(LOG_TAG, "Marking ${previewItem.id} as read")
+                                        markAsUnread(previewItem.id, false)
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    SwipeableFeedItemPreview(
-                        onSwipe = { currentState ->
-                            markAsReadOnSwipe(
-                                previewItem.id,
-                                !currentState,
-                                previewItem.bookmarked,
-                            )
-                        },
-                        filter = viewState.filter,
-                        item = previewItem,
-                        showThumbnail = viewState.showThumbnails,
-                        feedItemStyle = viewState.feedItemStyle,
-                        swipeAsRead = viewState.swipeAsRead,
-                        bookmarkIndicator = !viewState.currentFeedOrTag.isSavedArticles,
-                        maxLines = viewState.maxLines,
-                        showOnlyTitle = viewState.showOnlyTitle,
-                        showReadingTime = viewState.showReadingTime,
-                        onMarkAboveAsRead = {
-                            markBeforeAsRead(previewItem.cursor)
-                            if (viewState.filter.onlyUnread) {
-                                coroutineScope.launch {
-                                    listState.scrollToItem(0)
-                                }
-                            }
-                        },
-                        onMarkBelowAsRead = {
-                            markAfterAsRead(previewItem.cursor)
-                        },
-                        onToggleBookmark = {
-                            onSetBookmark(previewItem.id, !previewItem.bookmarked)
-                        },
-                        onShareItem = {
-                            val intent =
-                                Intent.createChooser(
-                                    Intent(Intent.ACTION_SEND).apply {
-                                        if (previewItem.link != null) {
-                                            putExtra(
-                                                Intent.EXTRA_TEXT,
-                                                stripTrackingParameters(previewItem.link),
-                                            )
-                                        }
-                                        putExtra(Intent.EXTRA_TITLE, previewItem.title)
-                                        type = "text/plain"
-                                    },
-                                    null,
+                        SwipeableFeedItemPreview(
+                            onSwipe = { currentState ->
+                                markAsReadOnSwipe(
+                                    previewItem.id,
+                                    !currentState,
+                                    previewItem.bookmarked,
                                 )
-                            activityLauncher.startActivity(
-                                openAdjacentIfSuitable = false,
-                                intent = intent,
-                            )
-                        },
-                        onItemClick = {
-                            onItemClick(previewItem.id)
-                        },
-                        onOpenFeedItemInReader = {
-                            onOpenFeedItemInReader(previewItem.id)
-                        },
-                        onOpenFeedItemInCustomTab = {
-                            onOpenFeedItemInCustomTab(previewItem.id)
-                        },
-                        onOpenFeedItemInBrowser = {
-                            onOpenFeedItemInBrowser(previewItem.id)
-                        },
-                        modifier =
-                            Modifier
-                                .then(
-                                    // Disable item animations during refresh to prevent scroll position issues
-                                    if (!viewState.currentlySyncing) {
-                                        Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
-                                    } else {
-                                        Modifier
-                                    },
-                                ).safeSemantics {
-                                    collectionItemInfo =
-                                        CollectionItemInfo(
-                                            rowIndex = itemIndex,
-                                            rowSpan = 1,
-                                            columnIndex = 1,
-                                            columnSpan = 1,
-                                        )
-                                }.let { modifier ->
-                                    if (viewState.markAsReadOnScroll && previewItem.unread) {
-                                        modifier.trackVisibility(0.9f) { info ->
-                                            if (info.isAboveThreshold) {
-                                                // Using itemCoroutineScope because that scope gets destroyed when item scrolls off screen
-                                                // So implicitly, if user is scrolling very fast, the coroutine will be cancelled
-                                                // before marking as read
-                                                itemCoroutineScope.launch {
-                                                    delay(REQUIRED_VISIBLE_TIME_FOR_MARK_AS_READ)
-                                                    if (viewState.filter.unread) {
-                                                        logDebug(LOG_TAG, "Item $itemIndex marking as wasVisible")
-                                                        itemWasVisible = true
-                                                        // Marks as read in disposable effect
-                                                    } else {
-                                                        logDebug(LOG_TAG, "Item $itemIndex marking as read")
-                                                        markAsUnread(previewItem.id, false)
+                            },
+                            filter = viewState.filter,
+                            item = previewItem,
+                            showThumbnail = viewState.showThumbnails,
+                            feedItemStyle = viewState.feedItemStyle,
+                            swipeAsRead = viewState.swipeAsRead,
+                            bookmarkIndicator = !viewState.currentFeedOrTag.isSavedArticles,
+                            maxLines = viewState.maxLines,
+                            showOnlyTitle = viewState.showOnlyTitle,
+                            showReadingTime = viewState.showReadingTime,
+                            onMarkAboveAsRead = {
+                                markBeforeAsRead(previewItem.cursor)
+                                if (viewState.filter.onlyUnread) {
+                                    coroutineScope.launch {
+                                        listState.scrollToItem(0)
+                                    }
+                                }
+                            },
+                            onMarkBelowAsRead = {
+                                markAfterAsRead(previewItem.cursor)
+                            },
+                            onToggleBookmark = {
+                                onSetBookmark(previewItem.id, !previewItem.bookmarked)
+                            },
+                            onShareItem = {
+                                val intent =
+                                    Intent.createChooser(
+                                        Intent(Intent.ACTION_SEND).apply {
+                                            if (previewItem.link != null) {
+                                                putExtra(
+                                                    Intent.EXTRA_TEXT,
+                                                    stripTrackingParameters(previewItem.link),
+                                                )
+                                            }
+                                            putExtra(Intent.EXTRA_TITLE, previewItem.title)
+                                            type = "text/plain"
+                                        },
+                                        null,
+                                    )
+                                activityLauncher.startActivity(
+                                    openAdjacentIfSuitable = false,
+                                    intent = intent,
+                                )
+                            },
+                            onItemClick = {
+                                onItemClick(previewItem.id)
+                            },
+                            onOpenFeedItemInReader = {
+                                onOpenFeedItemInReader(previewItem.id)
+                            },
+                            onOpenFeedItemInCustomTab = {
+                                onOpenFeedItemInCustomTab(previewItem.id)
+                            },
+                            onOpenFeedItemInBrowser = {
+                                onOpenFeedItemInBrowser(previewItem.id)
+                            },
+                            modifier =
+                                Modifier
+                                    .then(
+                                        // Disable item animations during refresh to prevent scroll position issues
+                                        if (!viewState.currentlySyncing) {
+                                            Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
+                                        } else {
+                                            Modifier
+                                        },
+                                    ).safeSemantics {
+                                        collectionItemInfo =
+                                            CollectionItemInfo(
+                                                rowIndex = itemIndex,
+                                                rowSpan = 1,
+                                                columnIndex = 1,
+                                                columnSpan = 1,
+                                            )
+                                    }.let { modifier ->
+                                        if (viewState.markAsReadOnScroll && previewItem.unread) {
+                                            modifier.trackVisibility(0.9f) { info ->
+                                                if (info.isAboveThreshold) {
+                                                    // Using itemCoroutineScope because that scope gets destroyed when item scrolls off screen
+                                                    // So implicitly, if user is scrolling very fast, the coroutine will be cancelled
+                                                    // before marking as read
+                                                    itemCoroutineScope.launch {
+                                                        delay(REQUIRED_VISIBLE_TIME_FOR_MARK_AS_READ)
+                                                        if (viewState.filter.unread) {
+                                                            logDebug(LOG_TAG, "Item $itemIndex marking as wasVisible")
+                                                            itemWasVisible = true
+                                                            // Marks as read in disposable effect
+                                                        } else {
+                                                            logDebug(LOG_TAG, "Item $itemIndex marking as read")
+                                                            markAsUnread(previewItem.id, false)
+                                                        }
                                                     }
                                                 }
                                             }
+                                        } else {
+                                            modifier
                                         }
-                                    } else {
-                                        modifier
-                                    }
-                                },
-                        swipeEnabled = !listState.isScrollInProgress,
-                    )
+                                    },
+                            swipeEnabled = !listState.isScrollInProgress,
+                        )
 
-                    if (viewState.feedItemStyle != FeedItemStyle.CARD &&
-                        viewState.feedItemStyle != FeedItemStyle.COMPACT_CARD
-                    ) {
-                        if (itemIndex < pagedFeedItems.itemCount - 1) {
-                            HorizontalDivider(
-                                modifier =
-                                    Modifier
-                                        .height(1.dp)
-                                        .fillMaxWidth(),
-                            )
+                        if (viewState.feedItemStyle != FeedItemStyle.CARD &&
+                            viewState.feedItemStyle != FeedItemStyle.COMPACT_CARD
+                        ) {
+                            if (itemIndex < pagedFeedItems.itemCount - 1) {
+                                HorizontalDivider(
+                                    modifier =
+                                        Modifier
+                                            .height(1.dp)
+                                            .fillMaxWidth(),
+                                )
+                            }
                         }
                     }
-                }
                 /*
                 This item is provide padding for the FAB
                  */
-                if (viewState.showFab && !viewState.isBottomBarVisible) {
-                    item(
-                        key = "SpacerForFab",
-                        contentType = "SpacerForFab",
-                    ) {
-                        Spacer(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height((56 + 16).dp),
-                        )
+                    if (viewState.showFab && !viewState.isBottomBarVisible) {
+                        item(
+                            key = "SpacerForFab",
+                            contentType = "SpacerForFab",
+                        ) {
+                            Spacer(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height((56 + 16).dp),
+                            )
+                        }
                     }
                 }
             }
@@ -1636,6 +1667,9 @@ fun FeedGridContent(
     pagedFeedItems: LazyPagingItems<FeedListItem>,
     translatedFeedCards: TranslatedFeedCards,
     onTranslateFeedCard: (FeedListItem) -> Unit,
+    translationJobs: List<TranslationJob>,
+    translatedItemIds: Set<Long>,
+    onDismissTranslationProgress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -1675,135 +1709,155 @@ fun FeedGridContent(
             exit = fadeOut(),
             visible = viewState.haveVisibleFeedItems,
         ) {
-            LazyVerticalStaggeredGrid(
-                state = gridState,
-                columns = StaggeredGridCells.Fixed(LocalDimens.current.feedScreenColumns),
-                contentPadding =
-                    if (viewState.isBottomBarVisible) {
-                        PaddingValues(0.dp)
-                    } else {
-                        WindowInsets.navigationBars
-                            .only(
-                                WindowInsetsSides.Bottom,
-                            ).addMargin(LocalDimens.current.margin)
-                            .asPaddingValues()
-                    },
-                verticalItemSpacing = LocalDimens.current.gutter,
-                horizontalArrangement = arrangement,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(
-                    count = pagedFeedItems.itemCount,
-                    key = pagedFeedItems.itemKey { it.id },
-                    contentType = pagedFeedItems.itemContentType { it.contentType(viewState.feedItemStyle) },
-                ) { itemIndex ->
-                    val loadedItem = pagedFeedItems[itemIndex] ?: PLACEHOLDER_ITEM
-                    val previewItem = translatedFeedCards.merge(loadedItem)
-
-                    val itemCoroutineScope = rememberCoroutineScope()
-                    var itemWasVisible by remember(previewItem.id) { mutableStateOf(false) }
-
-                    LaunchedEffect(loadedItem.id, loadedItem.title, loadedItem.snippet, translatedFeedCards.generation, onTranslateFeedCard) {
-                        onTranslateFeedCard(loadedItem)
+            CompositionLocalProvider(LocalTranslatedItemIds provides translatedItemIds) {
+                LazyVerticalStaggeredGrid(
+                    state = gridState,
+                    columns = StaggeredGridCells.Fixed(LocalDimens.current.feedScreenColumns),
+                    contentPadding =
+                        if (viewState.isBottomBarVisible) {
+                            PaddingValues(0.dp)
+                        } else {
+                            WindowInsets.navigationBars
+                                .only(
+                                    WindowInsetsSides.Bottom,
+                                ).addMargin(LocalDimens.current.margin)
+                                .asPaddingValues()
+                        },
+                    verticalItemSpacing = LocalDimens.current.gutter,
+                    horizontalArrangement = arrangement,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item(
+                        key = "TranslationProgressOverview",
+                        span = StaggeredGridItemSpan.FullLine,
+                        contentType = "TranslationProgressOverview",
+                    ) {
+                        TranslationProgressOverview(
+                            jobs = translationJobs,
+                            onDismiss = onDismissTranslationProgress,
+                        )
                     }
+                    items(
+                        count = pagedFeedItems.itemCount,
+                        key = pagedFeedItems.itemKey { it.id },
+                        contentType = pagedFeedItems.itemContentType { it.contentType(viewState.feedItemStyle) },
+                    ) { itemIndex ->
+                        val loadedItem = pagedFeedItems[itemIndex] ?: PLACEHOLDER_ITEM
+                        val previewItem = translatedFeedCards.merge(loadedItem)
 
-                    // Gets executed when only unread items are being shown
-                    // Marks items which have been visible as read when they scroll off screen
-                    DisposableEffect(previewItem.id, markAsUnread) {
-                        onDispose {
-                            if (itemWasVisible) {
-                                coroutineScope.launch {
-                                    logDebug(LOG_TAG, "Marking ${previewItem.id} as read")
-                                    markAsUnread(previewItem.id, false)
+                        val itemCoroutineScope = rememberCoroutineScope()
+                        var itemWasVisible by remember(previewItem.id) { mutableStateOf(false) }
+
+                        LaunchedEffect(loadedItem.id, loadedItem.title, loadedItem.snippet, translatedFeedCards.generation, onTranslateFeedCard) {
+                            onTranslateFeedCard(loadedItem)
+                        }
+
+                        // Gets executed when only unread items are being shown
+                        // Marks items which have been visible as read when they scroll off screen
+                        DisposableEffect(previewItem.id, markAsUnread) {
+                            onDispose {
+                                if (itemWasVisible) {
+                                    coroutineScope.launch {
+                                        logDebug(LOG_TAG, "Marking ${previewItem.id} as read")
+                                        markAsUnread(previewItem.id, false)
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    SwipeableFeedItemPreview(
-                        onSwipe = { currentState ->
-                            markAsReadOnSwipe(
-                                previewItem.id,
-                                !currentState,
-                                previewItem.bookmarked,
-                            )
-                        },
-                        filter = viewState.filter,
-                        item = previewItem,
-                        showThumbnail = viewState.showThumbnails,
-                        feedItemStyle = viewState.feedItemStyle,
-                        swipeAsRead = viewState.swipeAsRead,
-                        bookmarkIndicator = !viewState.currentFeedOrTag.isSavedArticles,
-                        maxLines = viewState.maxLines,
-                        showOnlyTitle = viewState.showOnlyTitle,
-                        showReadingTime = viewState.showReadingTime,
-                        onMarkAboveAsRead = {
-                            markBeforeAsRead(previewItem.cursor)
-                            if (viewState.filter.onlyUnread) {
-                                coroutineScope.launch {
-                                    gridState.scrollToItem(0)
-                                }
-                            }
-                        },
-                        onMarkBelowAsRead = {
-                            markAfterAsRead(previewItem.cursor)
-                        },
-                        onToggleBookmark = {
-                            onSetBookmark(previewItem.id, !previewItem.bookmarked)
-                        },
-                        onShareItem = {
-                            val intent =
-                                Intent.createChooser(
-                                    Intent(Intent.ACTION_SEND).apply {
-                                        if (previewItem.link != null) {
-                                            putExtra(
-                                                Intent.EXTRA_TEXT,
-                                                stripTrackingParameters(previewItem.link),
-                                            )
-                                        }
-                                        putExtra(Intent.EXTRA_TITLE, previewItem.title)
-                                        type = "text/plain"
-                                    },
-                                    null,
+                        SwipeableFeedItemPreview(
+                            onSwipe = { currentState ->
+                                markAsReadOnSwipe(
+                                    previewItem.id,
+                                    !currentState,
+                                    previewItem.bookmarked,
                                 )
-                            activityLauncher.startActivity(
-                                openAdjacentIfSuitable = false,
-                                intent = intent,
-                            )
-                        },
-                        onItemClick = {
-                            onItemClick(previewItem.id)
-                        },
-                        onOpenFeedItemInReader = {
-                            onOpenFeedItemInReader(previewItem.id)
-                        },
-                        onOpenFeedItemInCustomTab = {
-                            onOpenFeedItemInCustomTab(previewItem.id)
-                        },
-                        onOpenFeedItemInBrowser = {
-                            onOpenFeedItemInBrowser(previewItem.id)
-                        },
-                        modifier =
-                            if (viewState.markAsReadOnScroll && previewItem.unread) {
-                                Modifier
-                                    .trackVisibility(0.9f) { info ->
-                                        if (info.isAboveThreshold) {
-                                            // Using itemCoroutineScope because that scope gets destroyed when item scrolls off screen
-                                            // So implicitly, if user is scrolling very fast, the coroutine will be cancelled
-                                            // before marking as read
-                                            itemCoroutineScope.launch {
-                                                delay(REQUIRED_VISIBLE_TIME_FOR_MARK_AS_READ)
-                                                if (viewState.filter.unread) {
-                                                    logDebug(LOG_TAG, "Item $itemIndex marking as wasVisible")
-                                                    itemWasVisible = true
-                                                    // Marks as read in disposable effect
-                                                } else {
-                                                    logDebug(LOG_TAG, "Item $itemIndex marking as read")
-                                                    markAsUnread(previewItem.id, false)
+                            },
+                            filter = viewState.filter,
+                            item = previewItem,
+                            showThumbnail = viewState.showThumbnails,
+                            feedItemStyle = viewState.feedItemStyle,
+                            swipeAsRead = viewState.swipeAsRead,
+                            bookmarkIndicator = !viewState.currentFeedOrTag.isSavedArticles,
+                            maxLines = viewState.maxLines,
+                            showOnlyTitle = viewState.showOnlyTitle,
+                            showReadingTime = viewState.showReadingTime,
+                            onMarkAboveAsRead = {
+                                markBeforeAsRead(previewItem.cursor)
+                                if (viewState.filter.onlyUnread) {
+                                    coroutineScope.launch {
+                                        gridState.scrollToItem(0)
+                                    }
+                                }
+                            },
+                            onMarkBelowAsRead = {
+                                markAfterAsRead(previewItem.cursor)
+                            },
+                            onToggleBookmark = {
+                                onSetBookmark(previewItem.id, !previewItem.bookmarked)
+                            },
+                            onShareItem = {
+                                val intent =
+                                    Intent.createChooser(
+                                        Intent(Intent.ACTION_SEND).apply {
+                                            if (previewItem.link != null) {
+                                                putExtra(
+                                                    Intent.EXTRA_TEXT,
+                                                    stripTrackingParameters(previewItem.link),
+                                                )
+                                            }
+                                            putExtra(Intent.EXTRA_TITLE, previewItem.title)
+                                            type = "text/plain"
+                                        },
+                                        null,
+                                    )
+                                activityLauncher.startActivity(
+                                    openAdjacentIfSuitable = false,
+                                    intent = intent,
+                                )
+                            },
+                            onItemClick = {
+                                onItemClick(previewItem.id)
+                            },
+                            onOpenFeedItemInReader = {
+                                onOpenFeedItemInReader(previewItem.id)
+                            },
+                            onOpenFeedItemInCustomTab = {
+                                onOpenFeedItemInCustomTab(previewItem.id)
+                            },
+                            onOpenFeedItemInBrowser = {
+                                onOpenFeedItemInBrowser(previewItem.id)
+                            },
+                            modifier =
+                                if (viewState.markAsReadOnScroll && previewItem.unread) {
+                                    Modifier
+                                        .trackVisibility(0.9f) { info ->
+                                            if (info.isAboveThreshold) {
+                                                // Using itemCoroutineScope because that scope gets destroyed when item scrolls off screen
+                                                // So implicitly, if user is scrolling very fast, the coroutine will be cancelled
+                                                // before marking as read
+                                                itemCoroutineScope.launch {
+                                                    delay(REQUIRED_VISIBLE_TIME_FOR_MARK_AS_READ)
+                                                    if (viewState.filter.unread) {
+                                                        logDebug(LOG_TAG, "Item $itemIndex marking as wasVisible")
+                                                        itemWasVisible = true
+                                                        // Marks as read in disposable effect
+                                                    } else {
+                                                        logDebug(LOG_TAG, "Item $itemIndex marking as read")
+                                                        markAsUnread(previewItem.id, false)
+                                                    }
                                                 }
                                             }
-                                        }
-                                    }.then(
+                                        }.then(
+                                            // Disable item animations during refresh to prevent scroll position issues
+                                            if (!viewState.currentlySyncing) {
+                                                Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
+                                            } else {
+                                                Modifier
+                                            },
+                                        )
+                                } else {
+                                    Modifier.then(
                                         // Disable item animations during refresh to prevent scroll position issues
                                         if (!viewState.currentlySyncing) {
                                             Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
@@ -1811,18 +1865,10 @@ fun FeedGridContent(
                                             Modifier
                                         },
                                     )
-                            } else {
-                                Modifier.then(
-                                    // Disable item animations during refresh to prevent scroll position issues
-                                    if (!viewState.currentlySyncing) {
-                                        Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                            },
-                        swipeEnabled = !gridState.isScrollInProgress,
-                    )
+                                },
+                            swipeEnabled = !gridState.isScrollInProgress,
+                        )
+                    }
                 }
             }
         }

@@ -16,6 +16,7 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -24,6 +25,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -65,6 +67,38 @@ class OpenAIApi(
     @Serializable
     private data class DeepLTranslateResponse(
         val translations: List<DeepLTranslation>,
+    )
+
+    /** Qwen-MT 翻译模型（OpenAI 兼容模式）的消息体：只接受 user 角色，不接受 system。 */
+    @Serializable
+    private data class QwenMtMessage(
+        val role: String,
+        val content: String,
+    )
+
+    /** Qwen-MT 的 translation_options：语言用英文全称（如 "Chinese"），源语言可用 "auto"。 */
+    @Serializable
+    private data class QwenMtTranslationOptions(
+        @SerialName("source_lang") val sourceLang: String,
+        @SerialName("target_lang") val targetLang: String,
+        @SerialName("domains") val domains: String? = null,
+    )
+
+    @Serializable
+    private data class QwenMtChatRequest(
+        val model: String,
+        val messages: List<QwenMtMessage>,
+        @SerialName("translation_options") val translationOptions: QwenMtTranslationOptions,
+    )
+
+    @Serializable
+    private data class QwenMtChatResponse(
+        val choices: List<QwenMtChoice> = emptyList(),
+    )
+
+    @Serializable
+    private data class QwenMtChoice(
+        val message: QwenMtMessage? = null,
     )
 
     sealed interface SummaryResult {
@@ -244,6 +278,15 @@ class OpenAIApi(
         if (settings.isLocalTranslation) {
             return TranslationResult.Error(content = "Local translation is not available through this API")
         }
+        if (settings.isQwenMtModel) {
+            return translateWithQwenMt(
+                content = content,
+                targetLanguage = targetLanguage,
+                settings = settings,
+                preserveHtml = preserveHtml,
+                sourceLangHint = sourceLangHint,
+            )
+        }
         return translateWithOpenAI(
             content = content,
             targetLanguage = targetLanguage,
@@ -267,6 +310,14 @@ class OpenAIApi(
         }
         if (settings.isLocalTranslation) {
             return TranslationResult.Error(content = "Local translation needs no connection test")
+        }
+        if (settings.isQwenMtModel) {
+            return translateQwenMtChunk(
+                content = "ping",
+                sourceLanguage = "English",
+                targetLanguage = "Chinese",
+                settings = settings,
+            )
         }
         return translateWithOpenAI(
             content = "ping",
@@ -304,6 +355,128 @@ class OpenAIApi(
             content = translatedChunks.joinToString(separator = if (preserveHtml) "\n" else "\n\n"),
             detectedLanguage = "",
         )
+    }
+
+    /**
+     * Qwen-MT 翻译模型专用路径。
+     *
+     * Qwen-MT（qwen-mt-flash / qwen-mt-plus / qwen-mt-turbo）是「机器翻译专用模型」，与通用 chat 模型有两点关键差异：
+     * 1. messages 只接受 `user` 角色，不接受 `system`（否则报 "Role must be in [user, assistant]"）；
+     * 2. 目标语言 / 源语言通过 `translation_options.source_lang` / `target_lang` 指定（英文全称，源语言可 "auto"），
+     *    而不是写在系统提示词里。
+     *
+     * 因此这里绕过 openai-kotlin 的 ChatCompletionRequest（它无 extra_body 字段），直接发 JSON。
+     */
+    private suspend fun translateWithQwenMt(
+        content: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+        preserveHtml: Boolean,
+        sourceLangHint: String,
+    ): TranslationResult {
+        // 运行时兜底：非本地明文 http 一律拒绝（防 API Key 明文外泄）
+        if (settings.baseUrl.isInsecureNonLocalUrl()) {
+            return TranslationResult.Error(content = "The endpoint must use https://")
+        }
+
+        // Qwen-MT 是纯文本翻译模型，不按 HTML 标签语义翻译；preserveHtml 时剥掉标签，译完按段落回填 <p>
+        val (translatableText, isHtml) =
+            if (preserveHtml) {
+                htmlToTranslatableText(content) to true
+            } else {
+                content to false
+            }
+
+        val chunks = chunkTranslationContent(content = translatableText, preserveHtml = false)
+        val translatedChunks = ArrayList<String>(chunks.size)
+        for (chunk in chunks) {
+            when (
+                val result =
+                    translateQwenMtChunk(
+                        content = chunk,
+                        sourceLanguage = toQwenMtLanguageName(sourceLangHint) ?: "auto",
+                        targetLanguage =
+                            toQwenMtLanguageName(targetLanguage)
+                                ?.takeUnless { it == "auto" }
+                                ?: "Chinese",
+                        settings = settings,
+                    )
+            ) {
+                is TranslationResult.Success -> translatedChunks += result.content
+                is TranslationResult.Error -> return result
+            }
+        }
+        val joined = translatedChunks.joinToString(separator = "\n\n")
+        return TranslationResult.Success(
+            content = if (isHtml) wrapPlainTextInParagraphs(joined) else joined,
+            detectedLanguage = "",
+        )
+    }
+
+    /** 单块 Qwen-MT 翻译（带瞬时错误重试，4xx 快速失败）。 */
+    private suspend fun translateQwenMtChunk(
+        content: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+    ): TranslationResult {
+        var lastError = "Translation failed"
+        for (attempt in 0 until MAX_TRANSLATION_ATTEMPTS) {
+            try {
+                val response =
+                    postJson<QwenMtChatRequest, QwenMtChatResponse>(
+                        settings = settings,
+                        url = settings.baseUrl.trimEnd('/') + "/chat/completions",
+                        headers = mapOf("Authorization" to "Bearer ${settings.key}"),
+                        requestBody =
+                            QwenMtChatRequest(
+                                model = settings.modelId,
+                                messages =
+                                    listOf(
+                                        QwenMtMessage(
+                                            role = "user",
+                                            content = content,
+                                        ),
+                                    ),
+                                translationOptions =
+                                    QwenMtTranslationOptions(
+                                        sourceLang = sourceLanguage,
+                                        targetLang = targetLanguage,
+                                        domains = QWEN_MT_FINANCE_DOMAINS,
+                                    ),
+                            ),
+                        failurePrefix = "Translation request failed",
+                    )
+                val text =
+                    response.choices
+                        .firstOrNull()
+                        ?.message
+                        ?.content
+                        ?.trim()
+                        .orEmpty()
+                if (text.isNotBlank()) {
+                    return TranslationResult.Success(content = text, detectedLanguage = "")
+                }
+                lastError = "Response content is null"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // 保留上次错误，避免 message 为 null 时把错误信息覆盖成空字符串
+                val message = e.messageOrCause().orEmpty()
+                if (message.isNotBlank()) {
+                    lastError = message
+                }
+                // postJson 对非 2xx 抛 IllegalStateException（含 HTTP code）；4xx 为配置错误，快速失败不重试
+                val statusCode = extractHttpStatusCode(lastError)
+                if (statusCode != null && statusCode in 400..499 && statusCode != 429) {
+                    return TranslationResult.Error(content = lastError)
+                }
+            }
+            if (attempt < MAX_TRANSLATION_ATTEMPTS - 1) {
+                delay(RETRY_BACKOFF_MS * (attempt + 1L))
+            }
+        }
+        return TranslationResult.Error(content = lastError)
     }
 
     private suspend fun translateChunkWithRetry(
@@ -539,6 +712,17 @@ class OpenAIApi(
     private fun Throwable.messageOrCause(): String? = message ?: cause?.message
 }
 
+val OpenAISettings.isQwenMtModel: Boolean
+    get() =
+        modelId
+            .trim()
+            .lowercase()
+            .let { id ->
+                id.startsWith("qwen-mt") ||
+                    id.startsWith("mt-") ||
+                    id.contains("qwen-mt")
+            }
+
 val OpenAISettings.isAzure: Boolean
     get() = baseUrl.contains("openai.azure.com", ignoreCase = true)
 
@@ -687,6 +871,91 @@ private fun OpenAISettings.normalizedDeepLBaseUrl(): String {
 }
 
 const val LOCAL_TRANSLATION_PROVIDER_URL = "local://translation"
+
+/** Qwen-MT 的领域提示（domains）：引导其按财经新闻语境翻译，保留数字/代码/术语。 */
+private const val QWEN_MT_FINANCE_DOMAINS =
+    "The text is from US financial and economic news. " +
+        "Preserve numbers, percentages, dates, currencies, stock tickers and market indices exactly as-is. " +
+        "Use the target language's standard financial terminology."
+
+/**
+ * 把 HTML 转成适合 Qwen-MT 翻译的纯文本：块级标签/换行转成段落换行，去掉其余标签。
+ */
+internal fun htmlToTranslatableText(html: String): String =
+    runCatching {
+        val document = Jsoup.parse(html)
+        document.select("br").append("\n")
+        document.select("p, div, li, h1, h2, h3, h4, h5, h6, blockquote, tr").append("\n")
+        document
+            .wholeText()
+            .replace(Regex("\\n{3,}"), "\n\n")
+            .trim()
+    }.getOrDefault(html)
+
+/**
+ * 把翻译后的纯文本按空行回填为 <p> 段落，保证在文章页按段落渲染。
+ */
+internal fun wrapPlainTextInParagraphs(text: String): String =
+    text
+        .split(Regex("\\n\\s*\\n"))
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .joinToString(separator = "\n") { "<p>$it</p>" }
+        .ifBlank { "<p>$text</p>" }
+
+/**
+ * 把应用内的语言名/语言代码映射为 Qwen-MT 支持的英文语言全称。
+ * 应用内目标语言可能是系统语言显示名（如 "中文"/"English"）、ISO 代码（"zh"/"en"）或完整名。
+ * 无法识别时返回 null（源语言回退 "auto"，目标语言回退 "Chinese"）。
+ */
+internal fun toQwenMtLanguageName(language: String): String? {
+    val normalized = language.trim().lowercase(Locale.ROOT)
+    if (normalized.isBlank() || normalized == "auto") {
+        return "auto"
+    }
+    return when (normalized) {
+        "zh", "zh-cn", "zh-hans", "chinese", "simplified chinese", "中文", "简体中文", "汉语" -> "Chinese"
+        "zh-tw", "zh-hant", "traditional chinese", "繁体中文" -> "Traditional Chinese"
+        "en", "english", "英文", "英语" -> "English"
+        "ja", "jp", "japanese", "日文", "日语" -> "Japanese"
+        "ko", "kr", "korean", "韩文", "韩语", "朝鲜语" -> "Korean"
+        "ru", "russian", "俄文", "俄语" -> "Russian"
+        "fr", "french", "法文", "法语" -> "French"
+        "de", "german", "德文", "德语" -> "German"
+        "es", "spanish", "西班牙文", "西班牙语" -> "Spanish"
+        "pt", "portuguese", "葡萄牙文", "葡萄牙语" -> "Portuguese"
+        "it", "italian", "意大利文", "意大利语" -> "Italian"
+        "nl", "dutch", "荷兰文", "荷兰语" -> "Dutch"
+        "pl", "polish", "波兰文", "波兰语" -> "Polish"
+        "tr", "turkish", "土耳其文", "土耳其语" -> "Turkish"
+        "vi", "vietnamese", "越南文", "越南语" -> "Vietnamese"
+        "th", "thai", "泰文", "泰语" -> "Thai"
+        "id", "indonesian", "印度尼西亚语" -> "Indonesian"
+        "ms", "malay", "马来语" -> "Malay"
+        "ar", "arabic", "阿拉伯语" -> "Arabic"
+        "hi", "hindi", "印地语" -> "Hindi"
+        "uk", "ukrainian", "乌克兰语" -> "Ukrainian"
+        "cs", "czech", "捷克语" -> "Czech"
+        "el", "greek", "希腊语" -> "Greek"
+        "sv", "swedish", "瑞典语" -> "Swedish"
+        "hu", "hungarian", "匈牙利语" -> "Hungarian"
+        "da", "danish", "丹麦语" -> "Danish"
+        "fi", "finnish", "芬兰语" -> "Finnish"
+        "bg", "bulgarian", "保加利亚语" -> "Bulgarian"
+        "ro", "romanian", "罗马尼亚语" -> "Romanian"
+        "he", "hebrew", "希伯来语" -> "Hebrew"
+        "yue", "cantonese", "粤语" -> "Cantonese"
+        else -> null
+    }
+}
+
+/** 从 "prefix: HTTP 400 ..." 这类错误信息里提取 HTTP 状态码。 */
+private fun extractHttpStatusCode(message: String): Int? =
+    Regex("HTTP (\\d{3})")
+        .find(message)
+        ?.groupValues
+        ?.getOrNull(1)
+        ?.toIntOrNull()
 
 /** 单块最大字符数（约 1.5–2k token，保证分块译文质量与上下文完整）。 */
 private const val MAX_TRANSLATION_CHUNK_LENGTH = 3000

@@ -15,6 +15,10 @@ import com.nononsenseapps.feeder.util.flatten
 import com.nononsenseapps.feeder.util.left
 import com.nononsenseapps.feeder.util.logDebug
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import net.dankito.readability4j.extended.Readability4JExtended
@@ -22,6 +26,9 @@ import okhttp3.OkHttpClient
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.nio.charset.Charset
 
@@ -40,31 +47,63 @@ class FullTextParser(
                 .firstOrNull()
                 ?: emptyList()
 
-        return itemsToSync
-            .map { feedItem ->
-                parseFullArticleIfMissing(
-                    feedItem = feedItem,
-                ).isRight()
-            }.fold(true) { acc, value ->
-                acc && value
-            }
+        if (itemsToSync.isEmpty()) {
+            return true
+        }
+
+        // 有界并发抓取全文（单线程网络 + RateLimiter 下仍安全；每个请求独立，互不影响）。
+        return coroutineScope {
+            itemsToSync
+                .chunked(FULL_TEXT_CONCURRENCY)
+                .flatMap { batch ->
+                    batch
+                        .map { feedItem ->
+                            async(Dispatchers.IO) {
+                                parseFullArticleIfMissing(feedItem = feedItem).isRight()
+                            }
+                        }.awaitAll()
+                }
+        }.fold(true) { acc, value ->
+            acc && value
+        }
     }
 
     suspend fun parseFullArticleIfMissing(feedItem: FeedItemForFetching): Either<FeedParserError, Unit> {
         val fullArticleFile =
             blobFullFile(itemId = feedItem.id, filesDir = filePathProvider.fullArticleDir)
 
-        return try {
-            if (fullArticleFile.isFile) {
-                Either.Right(Unit)
-            } else {
-                parseFullArticle(feedItem = feedItem)
+        if (fullArticleFile.isFile) {
+            return Either.Right(Unit)
+        }
+
+        var lastFailure: Either<FeedParserError, Unit>? = null
+        for (attempt in 0 until FULL_TEXT_ATTEMPTS) {
+            try {
+                val result = parseFullArticle(feedItem = feedItem)
+                if (result.isRight()) {
+                    repository.markAsFullTextDownloaded(feedItem.id)
+                    return result
+                }
+                lastFailure = result
+                // 瞬时错误（网络/超时/5xx）重试；确定性错误（非 HTML/过大/无链接）标记已处理，不再反复尝试
+                if (!result.isTransientFullTextFailure()) {
+                    repository.markAsFullTextDownloaded(feedItem.id)
+                    break
+                }
+            } catch (t: Throwable) {
+                lastFailure = FullTextDecodingFailure(feedItem.link ?: "", t).left()
+                if (t !is IOException && t !is SocketTimeoutException && t !is InterruptedIOException) {
+                    repository.markAsFullTextDownloaded(feedItem.id)
+                    break
+                }
             }
-        } catch (t: Throwable) {
-            FullTextDecodingFailure(feedItem.link ?: "", t).left()
-        } finally {
-            repository.markAsFullTextDownloaded(feedItem.id)
-        }.onLeft {
+            if (attempt < FULL_TEXT_ATTEMPTS - 1) {
+                delay(FULL_TEXT_RETRY_BACKOFF_MS * (attempt + 1L))
+            }
+        }
+
+        val failure = lastFailure ?: FullTextDecodingFailure(feedItem.link ?: "", null).left()
+        return failure.onLeft {
             Log.w(LOG_TAG, "Failed to parse missing full article: $it", it.throwable)
         }
     }
@@ -172,6 +211,29 @@ class FullTextParser(
         // but this is way higher than is possible to render if actual HTML.
         // It will be truncated by HtmlLinearizer in that case.
         const val MAX_FULL_TEXT_BYTES = 3 * 1024 * 1024
+
+        /** 同时抓取的全文文章数上限（有界并发）。 */
+        internal const val FULL_TEXT_CONCURRENCY = 3
+
+        /** 每篇文章最多尝试次数（瞬时错误重试）。 */
+        internal const val FULL_TEXT_ATTEMPTS = 2
+
+        /** 重试退避基数（毫秒）。 */
+        internal const val FULL_TEXT_RETRY_BACKOFF_MS = 1000L
+    }
+}
+
+/** 是否为可重试的瞬时全文抓取失败（网络/超时/5xx/429）。 */
+private fun Either<FeedParserError, Unit>.isTransientFullTextFailure(): Boolean {
+    val error = leftOrNull() ?: return false
+    return when (error) {
+        is HttpError -> error.code in setOf(429, 500, 502, 503, 504)
+        is FetchError -> true
+        is FullTextDecodingFailure ->
+            error.throwable is IOException ||
+                error.throwable is SocketTimeoutException ||
+                error.throwable is InterruptedIOException
+        else -> false
     }
 }
 

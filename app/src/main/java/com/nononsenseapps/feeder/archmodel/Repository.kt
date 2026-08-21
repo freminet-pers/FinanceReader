@@ -74,17 +74,18 @@ class Repository(
     }
 
     private fun addDefaultFeedsIfInitialStart() {
-        // 复用一个布尔开关做首启播种（含历史遗留的 Feeder News 标记位）。
-        if (!settingsStore.addedFeederNews.value) {
-            applicationCoroutineScope.launch {
-                DEFAULT_FINANCE_FEEDS.forEach { (title, url) ->
-                    feedStore.upsertFeed(
-                        Feed(
-                            title = title,
-                            url = URL(url),
-                        ),
-                    )
-                }
+        // 首启播种 + 后续版本新增源增量补齐（upsert 按 URL 去重，不会重复添加）。
+        applicationCoroutineScope.launch {
+            DEFAULT_FINANCE_FEEDS.forEach { (title, url) ->
+                feedStore.upsertFeed(
+                    Feed(
+                        title = title,
+                        url = URL(url),
+                    ),
+                )
+            }
+            // 仅首启触发一次全量同步（新源已由后续每次启动由 upsert 补齐）
+            if (!settingsStore.addedFeederNews.value) {
                 settingsStore.setAddedFeederNews(true)
                 // feedId 缺省 = 同步全部
                 runOnceRssSync(
@@ -907,7 +908,7 @@ class Repository(
         private const val LOG_TAG = "FEEDER_REPO"
 
         /**
-         * 首次启动预置的美股财经 RSS 源（2026-08 实测可访问，中国网络可用性最佳集合）。
+         * 首次启动预置的美股财经 RSS 源（2026-08 实测可访问）。
          * 来源调研见 DEV_PLAN.md Phase 2 与 research/ai-translation-research.md。
          */
         internal val DEFAULT_FINANCE_FEEDS =
@@ -916,6 +917,11 @@ class Repository(
                 "CNBC Markets" to "https://www.cnbc.com/id/10000664/device/rss/rss.html",
                 "MarketWatch Top Stories" to "https://feeds.content.dowjones.io/public/rss/mw_topstories",
                 "MarketWatch Market Pulse" to "https://feeds.content.dowjones.io/public/rss/mw_marketpulse",
+                "Yahoo Finance" to "https://finance.yahoo.com/news/rssindex",
+                "WSJ Markets" to "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+                "Nasdaq Markets" to "https://www.nasdaq.com/feed/rssoutbound?category=Markets",
+                "NYT Economy" to "https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml",
+                "Fortune" to "https://fortune.com/feed/",
                 "Seeking Alpha" to "https://seekingalpha.com/feed.xml",
                 "NPR Business" to "https://feeds.npr.org/1006/rss.xml",
                 "FRED Blog" to "https://fredblog.stlouisfed.org/feed/",

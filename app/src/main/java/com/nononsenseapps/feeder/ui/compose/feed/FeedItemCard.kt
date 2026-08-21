@@ -261,6 +261,15 @@ fun RowScope.FeedItemText(
                         )
                     }
                 }
+                // 已翻译文章的小圆点：最右空白处，未读=主题色，已读=灰
+                val translatedItemIds = LocalTranslatedItemIds.current
+                if (item.id in translatedItemIds) {
+                    TranslatedArticleDot(
+                        isTranslated = true,
+                        isUnread = item.unread,
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                    )
+                }
             }
             DropdownMenu(
                 expanded = dropDownMenuExpanded,
