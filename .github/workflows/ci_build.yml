@@ -39,4 +39,5 @@ jobs:
         with:
           name: fdroid-apk
           retention-days: 7
-          path: app/build/outputs/apk/fdroid/release/app-fdroid-release.apk
+          path: app/build/outputs/apk/fdroid/release/*.apk
+          if-no-files-found: error
