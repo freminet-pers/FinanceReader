@@ -77,7 +77,7 @@ You can add any RSS, Atom, or JSON Feed and import or export subscriptions with 
 
 ## Install and build
 
-When an APK is published on GitHub, download the matching version from [Releases](https://github.com/freminet-pers/FinanceReader/releases), or build it yourself:
+Stable APK: [Finance Reader v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6). You can also build it yourself:
 
     ./gradlew :app:assembleFdroidRelease
 

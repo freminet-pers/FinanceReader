@@ -77,7 +77,7 @@ CNBC Top News、CNBC Markets、MarketWatch Top Stories、MarketWatch Market Puls
 
 ## 安装与构建
 
-GitHub 发布 APK 时，请从 [Releases](https://github.com/freminet-pers/FinanceReader/releases) 下载对应版本；也可以自行构建：
+当前稳定 APK：[财经速读 v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6)。也可以自行构建：
 
     ./gradlew :app:assembleFdroidRelease
 
