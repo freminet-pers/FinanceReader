@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.6] - 2026-09-13
+
+### Added
+
+- Added selectable DeepSeek V4.1 Flash and Qwen-MT Flash translation presets with prefilled endpoints and models.
+- Added background translation for uncached article titles, plus an independent option to keep cached translated titles visible.
+- Added automatic translation of the article title and RSS description when an article is opened.
+
+### Changed
+
+- Reused the list title translation on the article page and kept full-text translation behind the explicit article action.
+- Added provider-specific request handling: disabled unnecessary DeepSeek thinking output and used Qwen-MT translation options and finance-domain metadata.
+- Improved caching, chunking, retry handling, background serialization, and stale-request protection for translation.
+- Completed the new translation settings across all existing locale resource packs.
+
+### Fixed
+
+- Replaced the external network-dependent JSON Feed test with a local mock server to keep validation deterministic.
+- Fixed Android resource escaping issues in translated strings.
+
 ## [2.22.0] - 2026-08-04
 
 ### 🚀 Features

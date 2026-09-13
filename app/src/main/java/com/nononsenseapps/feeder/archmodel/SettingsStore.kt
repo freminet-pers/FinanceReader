@@ -620,6 +620,14 @@ class SettingsStore(
         sp.edit().putBoolean(PREF_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT, value).apply()
     }
 
+    private val _showTranslatedFeedTitles = MutableStateFlow(sp.getBoolean(PREF_SHOW_TRANSLATED_FEED_TITLES, true))
+    val showTranslatedFeedTitles = _showTranslatedFeedTitles.asStateFlow()
+
+    fun setShowTranslatedFeedTitles(value: Boolean) {
+        _showTranslatedFeedTitles.value = value
+        sp.edit().putBoolean(PREF_SHOW_TRANSLATED_FEED_TITLES, value).apply()
+    }
+
     private val _translateArticlesByDefault = MutableStateFlow(sp.getBoolean(PREF_TRANSLATE_ARTICLES_BY_DEFAULT, false))
     val translateArticlesByDefault = _translateArticlesByDefault.asStateFlow()
 
@@ -781,6 +789,7 @@ const val PREF_TRANSLATION_SYSTEM_PROMPT = "pref_translation_system_prompt"
 
 // Keep the legacy persisted key name for preference and OPML compatibility.
 const val PREF_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT = "pref_translate_feed_cards_by_default"
+const val PREF_SHOW_TRANSLATED_FEED_TITLES = "pref_show_translated_feed_titles"
 const val PREF_TRANSLATE_ARTICLES_BY_DEFAULT = "pref_translate_articles_by_default"
 
 /**
@@ -848,6 +857,7 @@ enum class UserSettings(
     SETTING_TRANSLATION_SOURCE_LANGUAGE(key = PREF_TRANSLATION_SOURCE_LANGUAGE),
     SETTING_TRANSLATION_SYSTEM_PROMPT(key = PREF_TRANSLATION_SYSTEM_PROMPT),
     SETTING_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT(key = PREF_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT),
+    SETTING_SHOW_TRANSLATED_FEED_TITLES(key = PREF_SHOW_TRANSLATED_FEED_TITLES),
     SETTING_TRANSLATE_ARTICLES_BY_DEFAULT(key = PREF_TRANSLATE_ARTICLES_BY_DEFAULT),
     ;
 

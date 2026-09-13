@@ -347,4 +347,12 @@
     <string name="stop_audio">Hanglejátszás megállítása</string>
     <string name="seek_back_10_seconds">Visszatekerés 10 másodpercet</string>
     <string name="seek_forward_10_seconds">Előretekerés 10 másodpercet</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Ajánlott: deepseek-flash a pénzügyi hírek gyors és pontos fordításához. A modell és a végpont előre ki van töltve; add meg az API-kulcsodat.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Ajánlott: qwen-mt-flash a sebesség és a minőség jó egyensúlyához. A modell és a végpont előre ki van töltve; add meg az API-kulcsodat.</string>
+    <string name="provider_qwen_mt_prompt_hint">A Qwen-MT automatikusan dedikált fordítási beállításokat és a pénzügyi domaint használja; az általános rendszerprompt nem kerül elküldésre.</string>
+    <string name="translate_all_article_titles_description">Az alkalmazás megnyitásakor a háttérben lefordítja a nem gyorsítótárazott cikkcímeket. A gyorsítótárazott címekhez nem küld új kérést.</string>
+    <string name="show_translated_feed_titles">Fordított címek megjelenítése</string>
+    <string name="show_translated_feed_titles_description">Az automatikus fordítás kikapcsolásakor is jelenítse meg a már lefordított és gyorsítótárazott címeket.</string>
 </resources>

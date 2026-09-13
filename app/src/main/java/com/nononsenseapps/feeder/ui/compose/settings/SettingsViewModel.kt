@@ -175,6 +175,10 @@ class SettingsViewModel(
         repository.setTranslateArticlePreviewsByDefault(value)
     }
 
+    fun setShowTranslatedFeedTitles(value: Boolean) {
+        repository.setShowTranslatedFeedTitles(value)
+    }
+
     fun setTranslateArticlesByDefault(value: Boolean) {
         repository.setTranslateArticlesByDefault(value)
     }
@@ -316,6 +320,7 @@ class SettingsViewModel(
                 translationApiModelsState,
                 repository.isOpenDrawerOnFab,
                 repository.translateArticlePreviewsByDefault,
+                repository.showTranslatedFeedTitles,
                 repository.translateArticlesByDefault,
                 repository.font,
                 repository.isPagingMode,
@@ -369,15 +374,16 @@ class SettingsViewModel(
                     canTranslate = (params[29] as OpenAISettings).canUseAsTranslationApi && (params[30] as String).trim().isNotBlank(),
                     isOpenDrawerOnFab = params[32] as Boolean,
                     translateArticlePreviewsByDefault = params[33] as Boolean,
-                    translateArticlesByDefault = params[34] as Boolean,
-                    font = params[35] as FontSelection,
-                    isPagingMode = params[36] as Boolean,
-                    isAnimatedPaging = params[37] as Boolean,
-                    translationModelPairs = params[38] as List<LanguagePairInfo>,
-                    useInAppAudioPlayer = params[39] as Boolean,
-                    translationSourceLanguage = params[40] as String,
-                    translationSystemPrompt = params[41] as String,
-                    connectionTestState = params[42] as ConnectionTestState,
+                    showTranslatedFeedTitles = params[34] as Boolean,
+                    translateArticlesByDefault = params[35] as Boolean,
+                    font = params[36] as FontSelection,
+                    isPagingMode = params[37] as Boolean,
+                    isAnimatedPaging = params[38] as Boolean,
+                    translationModelPairs = params[39] as List<LanguagePairInfo>,
+                    useInAppAudioPlayer = params[40] as Boolean,
+                    translationSourceLanguage = params[41] as String,
+                    translationSystemPrompt = params[42] as String,
+                    connectionTestState = params[43] as ConnectionTestState,
                 )
             }.collect {
                 _viewState.value = it
@@ -480,6 +486,7 @@ data class SettingsViewState(
     val showTitleUnreadCount: Boolean = false,
     val isOpenDrawerOnFab: Boolean = false,
     val translateArticlePreviewsByDefault: Boolean = false,
+    val showTranslatedFeedTitles: Boolean = true,
     val translateArticlesByDefault: Boolean = false,
     val translationModelPairs: List<LanguagePairInfo> = emptyList(),
     val font: FontSelection = SystemDefault,

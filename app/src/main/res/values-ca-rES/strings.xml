@@ -239,4 +239,12 @@
     <string name="font">Font</string>
     <string name="text_preview">Vista prèvia</string>
     <string name="italic">Itàlica</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Recomanat: deepseek-flash per traduir notícies financeres ràpidament i amb precisió. El model i el punt final ja estan emplenats; introdueix la teva clau d\'API.</string>
+    <string name="provider_qwen_mt">Traducció Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Recomanat: qwen-mt-flash per a un bon equilibri entre velocitat i qualitat. El model i el punt final ja estan emplenats; introdueix la teva clau d\'API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT utilitza automàticament una configuració de traducció específica i el domini financer; no s\'envia el missatge del sistema general.</string>
+    <string name="translate_all_article_titles_description">Quan s\'obre l\'aplicació, tradueix en segon pla tots els títols d\'articles sense memòria cau. Els títols en memòria cau no es tornen a sol·licitar.</string>
+    <string name="show_translated_feed_titles">Mostra els títols traduïts</string>
+    <string name="show_translated_feed_titles_description">Continua mostrant els títols ja traduïts i emmagatzemats a la memòria cau quan la traducció automàtica està desactivada.</string>
 </resources>

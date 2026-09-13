@@ -26,6 +26,7 @@ import com.nononsenseapps.feeder.ui.compose.feed.FeedListItem
 import com.nononsenseapps.feeder.ui.compose.feedarticle.FeedListFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.kodein.di.DI
@@ -86,6 +87,18 @@ class FeedItemStore(
             tag.isNotEmpty() -> dao.widgetPreviewsByTag(tag)
             else -> dao.widgetPreviewsAllFeeds()
         }.map { list -> list.map { it.toFeedListItem(application) } }
+
+    /** 所有未屏蔽文章的轻量预览，供启动时自动翻译标题使用。 */
+    fun getAllFeedListItemsForTitleTranslation(): Flow<List<FeedListItem>> =
+        dao
+            .allPreviewsForTitleTranslation()
+            .map { list -> list.map { it.toFeedListItem(application) } }
+            .distinctUntilChanged { oldItems, newItems ->
+                oldItems.size == newItems.size &&
+                    oldItems.zip(newItems).all { (oldItem, newItem) ->
+                        oldItem.id == newItem.id && oldItem.title == newItem.title
+                    }
+            }
 
     fun getPagedFeedItemsRaw(
         feedId: Long,

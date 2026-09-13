@@ -248,6 +248,8 @@ fun SettingsScreen(
             onOpenDrawerOnFab = settingsViewModel::setOpenDrawerOnFab,
             translateArticlePreviewsByDefault = viewState.translateArticlePreviewsByDefault,
             onTranslateArticlePreviewsByDefault = settingsViewModel::setTranslateArticlePreviewsByDefault,
+            showTranslatedFeedTitles = viewState.showTranslatedFeedTitles,
+            onShowTranslatedFeedTitles = settingsViewModel::setShowTranslatedFeedTitles,
             translateArticlesByDefault = viewState.translateArticlesByDefault,
             onTranslateArticlesByDefault = settingsViewModel::setTranslateArticlesByDefault,
             onTextSettings = onNavigateToTextSettingsScreen,
@@ -352,6 +354,8 @@ private fun SettingsScreenPreview() {
             onOpenDrawerOnFab = {},
             translateArticlePreviewsByDefault = false,
             onTranslateArticlePreviewsByDefault = {},
+            showTranslatedFeedTitles = true,
+            onShowTranslatedFeedTitles = {},
             translateArticlesByDefault = false,
             onTranslateArticlesByDefault = {},
             onTextSettings = {},
@@ -445,6 +449,8 @@ fun SettingsList(
     onOpenDrawerOnFab: (Boolean) -> Unit,
     translateArticlePreviewsByDefault: Boolean,
     onTranslateArticlePreviewsByDefault: (Boolean) -> Unit,
+    showTranslatedFeedTitles: Boolean,
+    onShowTranslatedFeedTitles: (Boolean) -> Unit,
     translateArticlesByDefault: Boolean,
     onTranslateArticlesByDefault: (Boolean) -> Unit,
     currentFontSelection: FontSelection,
@@ -911,6 +917,14 @@ fun SettingsList(
                     title = stringResource(id = R.string.translate_feed_cards_by_default),
                     checked = translateArticlePreviewsByDefault,
                     onCheckedChange = onTranslateArticlePreviewsByDefault,
+                    description = stringResource(id = R.string.translate_all_article_titles_description),
+                )
+
+                SwitchSetting(
+                    title = stringResource(id = R.string.show_translated_feed_titles),
+                    checked = showTranslatedFeedTitles,
+                    onCheckedChange = onShowTranslatedFeedTitles,
+                    description = stringResource(id = R.string.show_translated_feed_titles_description),
                 )
 
                 SwitchSetting(

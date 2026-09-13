@@ -254,4 +254,12 @@
     <string name="time_out_validation_error">タイムアウトは３０～６００秒にしてください</string>
     <string name="time_out_placeholder">OpenAIリクエストのタイムアウト</string>
     <string name="api_key">API キー</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">推奨：金融ニュースを高速かつ正確に翻訳する deepseek-flash。モデルとエンドポイントは入力済みです。API キーを入力してください。</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash 翻訳</string>
+    <string name="provider_qwen_mt_hint">推奨：速度と品質のバランスがよい qwen-mt-flash。モデルとエンドポイントは入力済みです。API キーを入力してください。</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT は専用の翻訳設定と金融分野を自動的に使用します。一般的なシステムプロンプトは送信されません。</string>
+    <string name="translate_all_article_titles_description">アプリを開くと、キャッシュされていないすべての記事タイトルをバックグラウンドで翻訳します。キャッシュ済みのタイトルは再要求しません。</string>
+    <string name="show_translated_feed_titles">翻訳済みタイトルを表示</string>
+    <string name="show_translated_feed_titles_description">自動翻訳をオフにしても、翻訳済みでキャッシュされたタイトルを表示し続けます。</string>
 </resources>

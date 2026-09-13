@@ -282,4 +282,12 @@
     <string name="could_not_add_font">Nepodarilo sa pridať font</string>
     <string name="could_not_remove_font">Nepodarilo sa zmazať font</string>
     <string name="something_went_wrong">Niečo sa pokazilo</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Odporúčané: deepseek-flash na rýchly a presný preklad finančných správ. Model a koncový bod sú predvyplnené; zadajte svoj kľúč API.</string>
+    <string name="provider_qwen_mt">Preklad Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Odporúčané: qwen-mt-flash pre dobrý pomer rýchlosti a kvality. Model a koncový bod sú predvyplnené; zadajte svoj kľúč API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT automaticky používa špecializované nastavenia prekladu a finančnú doménu; všeobecná systémová výzva sa neposiela.</string>
+    <string name="translate_all_article_titles_description">Po otvorení aplikácie sa na pozadí preložia všetky titulky článkov, ktoré nie sú v cache. Titulky uložené v cache sa znova nevyžiadajú.</string>
+    <string name="show_translated_feed_titles">Zobrazovať preložené titulky</string>
+    <string name="show_translated_feed_titles_description">Po vypnutí automatického prekladu naďalej zobrazovať už preložené titulky uložené v cache.</string>
 </resources>

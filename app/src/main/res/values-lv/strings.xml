@@ -336,4 +336,12 @@
     <string name="device_sync_beta_warning">BRĪDINĀJUMS! Šī ir Beta funkcija. Vispirms izgūstiet visas savas ziņu plūsmas OPML datnē un saglabājiet to kā rezerves kopiju.</string>
     <string name="local_translation_requires_android_12">Vietējā tulkošana darbojas uz Android 12 un jaunākām versijām.</string>
     <string name="original_article">oriģinālais</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Ieteicams: deepseek-flash ātrai un precīzai finanšu ziņu tulkošanai. Modelis un galapunkts ir aizpildīti iepriekš; ievadiet savu API atslēgu.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash tulkošana</string>
+    <string name="provider_qwen_mt_hint">Ieteicams: qwen-mt-flash labam ātruma un kvalitātes līdzsvaram. Modelis un galapunkts ir aizpildīti iepriekš; ievadiet savu API atslēgu.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT automātiski izmanto īpašus tulkošanas iestatījumus un finanšu jomu; vispārīgā sistēmas uzvedne netiek nosūtīta.</string>
+    <string name="translate_all_article_titles_description">Atverot lietotni, fonā tiek tulkoti visi rakstu virsraksti, kas nav kešatmiņā. Kešatmiņā esošie virsraksti netiek pieprasīti atkārtoti.</string>
+    <string name="show_translated_feed_titles">Rādīt iztulkotos virsrakstus</string>
+    <string name="show_translated_feed_titles_description">Kad automātiskā tulkošana ir izslēgta, turpināt rādīt jau iztulkotos un kešatmiņā saglabātos virsrakstus.</string>
 </resources>

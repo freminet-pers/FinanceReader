@@ -231,4 +231,12 @@
     <string name="one_word">كلمة واحدة</string>
     <string name="export_saved_articles">صدّر المقالات المحفوظة</string>
     <string name="nostr_feed_description">Nostr ا‏ةطساوب تالقم %1$s</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">موصى به: deepseek-flash لترجمة الأخبار المالية بسرعة ودقة. يتم ملء النموذج ونقطة النهاية مسبقًا؛ أدخل مفتاح API الخاص بك.</string>
+    <string name="provider_qwen_mt">ترجمة Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">موصى به: qwen-mt-flash لتحقيق توازن جيد بين السرعة والجودة. يتم ملء النموذج ونقطة النهاية مسبقًا؛ أدخل مفتاح API الخاص بك.</string>
+    <string name="provider_qwen_mt_prompt_hint">يستخدم Qwen-MT إعدادات ترجمة مخصصة ومجال المال تلقائيًا؛ ولا يتم إرسال مطالبة النظام العامة.</string>
+    <string name="translate_all_article_titles_description">عند فتح التطبيق، تُترجم في الخلفية جميع عناوين المقالات غير المخزنة مؤقتًا. لا تتم إعادة طلب العناوين المخزنة مؤقتًا.</string>
+    <string name="show_translated_feed_titles">إظهار العناوين المترجمة</string>
+    <string name="show_translated_feed_titles_description">استمر في إظهار العناوين التي تُرجمت وخُزنت مؤقتًا عند إيقاف الترجمة التلقائية.</string>
 </resources>

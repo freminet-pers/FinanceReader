@@ -278,4 +278,12 @@
     <string name="feed_search_suggestions_header">คำแนะนำ</string>
     <string name="summarize_on_open">สรุปความเมื่อเปิด</string>
     <string name="openai_settings_info">รองรับกับผู้ให้บริการ AI หลากหลาย, แต่ไม่ใช่ทั้งหมด</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">แนะนำ: deepseek-flash สำหรับแปลข่าวการเงินอย่างรวดเร็วและแม่นยำ รุ่นโมเดลและปลายทางถูกกรอกไว้แล้ว โปรดป้อนคีย์ API ของคุณ</string>
+    <string name="provider_qwen_mt">การแปล Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">แนะนำ: qwen-mt-flash เพื่อความสมดุลระหว่างความเร็วและคุณภาพ รุ่นโมเดลและปลายทางถูกกรอกไว้แล้ว โปรดป้อนคีย์ API ของคุณ</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT จะใช้การตั้งค่าการแปลเฉพาะและโดเมนการเงินโดยอัตโนมัติ โดยจะไม่ส่งพรอมต์ระบบทั่วไป</string>
+    <string name="translate_all_article_titles_description">เมื่อเปิดแอป ระบบจะแปลชื่อบทความทั้งหมดที่ยังไม่ได้แคชในเบื้องหลัง ชื่อที่แคชไว้แล้วจะไม่ถูกร้องขอซ้ำ</string>
+    <string name="show_translated_feed_titles">แสดงชื่อเรื่องที่แปลแล้ว</string>
+    <string name="show_translated_feed_titles_description">แสดงชื่อเรื่องที่แปลและแคชไว้แล้วต่อไป แม้ปิดการแปลอัตโนมัติ</string>
 </resources>

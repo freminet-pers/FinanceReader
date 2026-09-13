@@ -250,4 +250,12 @@
     <string name="feed_item_style_compact_card">Компактный карточный</string>
     <string name="touch_to_play_audio">Коснитесь для воспроизведения аудио</string>
     <string name="show_title_unread_count">Показывать число непрочитанных статей в заголовке</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Рекомендуется: deepseek-flash для быстрого и точного перевода финансовых новостей. Модель и конечная точка уже заполнены; введите свой API-ключ.</string>
+    <string name="provider_qwen_mt">Перевод Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Рекомендуется: qwen-mt-flash для хорошего баланса скорости и качества. Модель и конечная точка уже заполнены; введите свой API-ключ.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT автоматически использует специальные настройки перевода и финансовую тематику; общий системный промпт не отправляется.</string>
+    <string name="translate_all_article_titles_description">При открытии приложения в фоновом режиме переводятся все заголовки статей, которых нет в кэше. Заголовки из кэша повторно не запрашиваются.</string>
+    <string name="show_translated_feed_titles">Показывать переведённые заголовки</string>
+    <string name="show_translated_feed_titles_description">Продолжать показывать уже переведённые и сохранённые в кэше заголовки, когда автоматический перевод отключён.</string>
 </resources>

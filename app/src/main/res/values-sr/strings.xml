@@ -347,4 +347,12 @@
     <string name="stop_audio">Заустави аудио</string>
     <string name="seek_back_10_seconds">Премотај 10 секунди уназад</string>
     <string name="seek_forward_10_seconds">Премотај 10 секунди унапред</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Препоручено: deepseek-flash за брз и прецизан превод финансијских вести. Модел и крајња тачка су унапред попуњени; унесите свој API кључ.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash превод</string>
+    <string name="provider_qwen_mt_hint">Препоручено: qwen-mt-flash за добар баланс брзине и квалитета. Модел и крајња тачка су унапред попуњени; унесите свој API кључ.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT аутоматски користи посебна подешавања превода и финансијску област; општи системски упит се не шаље.</string>
+    <string name="translate_all_article_titles_description">При отварању апликације, у позадини се преводе сви наслови чланака који нису кеширани. Кеширани наслови се не захтевају поново.</string>
+    <string name="show_translated_feed_titles">Прикажи преведене наслове</string>
+    <string name="show_translated_feed_titles_description">Настави да приказујеш већ преведене и кеширане наслове када је аутоматски превод искључен.</string>
 </resources>

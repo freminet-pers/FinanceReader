@@ -260,4 +260,12 @@
     <string name="no_models_were_found">Malleja ei löytynyt</string>
     <string name="azure_deployment_id">Azure-käyttöönottotunnus</string>
     <string name="list_of_available_models">Luettelo saatavilla olevista malleista</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Suositus: deepseek-flash nopeaan ja tarkkaan talousuutisten kääntämiseen. Malli ja päätepiste on täytetty valmiiksi; syötä API-avaimesi.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Suositus: qwen-mt-flash hyvään nopeuden ja laadun tasapainoon. Malli ja päätepiste on täytetty valmiiksi; syötä API-avaimesi.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT käyttää automaattisesti erillisiä käännösasetuksia ja talousalaa; yleistä järjestelmäkehotetta ei lähetetä.</string>
+    <string name="translate_all_article_titles_description">Kun sovellus avataan, kaikki välimuistittomien artikkelien otsikot käännetään taustalla. Välimuistissa olevia otsikoita ei pyydetä uudelleen.</string>
+    <string name="show_translated_feed_titles">Näytä käännetyt otsikot</string>
+    <string name="show_translated_feed_titles_description">Näytä edelleen jo käännetyt ja välimuistiin tallennetut otsikot, kun automaattinen käännös on poistettu käytöstä.</string>
 </resources>

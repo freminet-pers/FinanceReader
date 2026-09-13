@@ -40,11 +40,15 @@ import com.nononsenseapps.feeder.ui.compose.feed.FeedOrTag
 import com.nononsenseapps.feeder.ui.compose.text.htmlToAnnotatedString
 import com.nononsenseapps.feeder.util.Either
 import com.nononsenseapps.feeder.util.FilePathProvider
+import com.nononsenseapps.feeder.util.logDebug
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -56,6 +60,8 @@ import org.kodein.di.instance
 import java.io.FileNotFoundException
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+
+private const val LOG_TAG = "FEEDER_FeedVM"
 
 class FeedViewModel(
     di: DI,
@@ -93,6 +99,7 @@ class FeedViewModel(
             TranslatedFeedCards(),
         )
     private val inFlightFeedCardTranslations = ConcurrentHashMap.newKeySet<FeedCardTranslationRequest>()
+    private var allTitleTranslationJob: Job? = null
 
     /** 全局翻译进度任务（列表顶部小 UI 与详情）。 */
     val translationJobs: StateFlow<List<TranslationJob>> = translationProgressStore.jobs
@@ -215,19 +222,46 @@ class FeedViewModel(
         viewModelScope.launch {
             combine(
                 repository.translateArticlePreviewsByDefault,
+                repository.showTranslatedFeedTitles,
                 repository.translationApiSettings,
                 repository.preferredTranslationLanguage,
-            ) { shouldTranslate, settings, targetLanguage ->
+            ) { shouldTranslate, showTranslatedTitles, settings, targetLanguage ->
                 feedCardTranslationConfig(
                     enabled = shouldTranslate,
+                    showTranslatedTitles = showTranslatedTitles,
                     settings = settings,
                     targetLanguage = targetLanguage,
                 )
             }.distinctUntilChanged()
-                .collect {
+                .collect { config ->
+                    allTitleTranslationJob?.cancel()
+                    allTitleTranslationJob = null
                     inFlightFeedCardTranslations.clear()
                     translatedFeedCardEntries.value = emptyMap()
                     feedCardTranslationGeneration.update { it + 1 }
+
+                    if (config.isActive()) {
+                        allTitleTranslationJob =
+                            applicationCoroutineScope.launch {
+                                repository
+                                    .getAllFeedListItemsForTitleTranslation()
+                                    .collectLatest { items ->
+                                        items.forEach { item ->
+                                            try {
+                                                translateFeedCard(item, config, allowNetwork = true)
+                                            } catch (error: CancellationException) {
+                                                throw error
+                                            } catch (error: Exception) {
+                                                // 一个标题失败不能中断其余文章的自动翻译。
+                                                logDebug(
+                                                    LOG_TAG,
+                                                    "Automatic title translation failed for ${item.id}: ${error.message}",
+                                                )
+                                            }
+                                        }
+                                    }
+                            }
+                    }
                 }
         }
     }
@@ -243,9 +277,26 @@ class FeedViewModel(
         }
 
         val config = currentFeedCardTranslationConfig() ?: return
+        viewModelScope.launch {
+            try {
+                translateFeedCard(item, config, allowNetwork = config.enabled)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                logDebug(LOG_TAG, "Title translation failed for ${item.id}: ${error.message}")
+            }
+        }
+    }
+
+    /** 翻译单篇文章的标题；列表预览不再额外请求摘要，减少耗时和费用。 */
+    private suspend fun translateFeedCard(
+        item: FeedListItem,
+        config: FeedCardTranslationConfig,
+        allowNetwork: Boolean,
+    ) {
         val source = FeedCardSource.from(item)
         val existingEntry = translatedFeedCardEntries.value[source]
-        if (existingEntry?.isComplete == true) {
+        if (existingEntry?.isComplete == true && existingEntry.sourceTitle == item.title) {
             return
         }
 
@@ -253,7 +304,6 @@ class FeedViewModel(
             FeedCardTranslationRequest(
                 itemId = item.id,
                 sourceTitle = item.title,
-                sourceSnippet = item.snippet,
                 settings = config.settings,
                 targetLanguage = config.targetLanguage,
             )
@@ -261,88 +311,113 @@ class FeedViewModel(
             return
         }
 
-        viewModelScope.launch {
-            try {
-                val cached = translationManager.getCachedTranslatedFeedListItem(item, config.settings, config.targetLanguage)
-                if (cached.hasCachedTranslation) {
-                    updateTranslatedFeedCard(
-                        source = source,
-                        entry =
-                            FeedCardTranslationEntry(
-                                item = cached.item,
-                                isComplete = cached.isFullyCached,
-                            ),
-                    )
-                }
-
-                if (cached.isFullyCached) {
-                    return@launch
-                }
-
-                if (config.settings.isLocalTranslation) {
-                    val text =
-                        listOf(item.title, item.snippet)
-                            .filter { it.isNotBlank() }
-                            .joinToString(separator = " ")
-                    if (!localTranslator.canTranslateWithoutBergamotDownload(
-                            content = text,
-                            targetLanguage = config.targetLanguage,
-                            preserveHtml = false,
-                        )
-                    ) {
-                        return@launch
-                    }
-                }
-
-                val translatedItem =
-                    translationManager.translateFeedListItem(
-                        item = item,
-                        settings = config.settings,
-                        targetLanguage = config.targetLanguage,
-                    )
-                val updatedCached =
-                    translationManager.getCachedTranslatedFeedListItem(
-                        item = item,
-                        settings = config.settings,
-                        targetLanguage = config.targetLanguage,
-                    )
-                val displayItem =
-                    when {
-                        updatedCached.hasCachedTranslation -> updatedCached.item
-                        translatedItem != item -> translatedItem
-                        else -> null
-                    }
-
-                if (displayItem != null && currentFeedCardTranslationConfig() == config) {
-                    updateTranslatedFeedCard(
-                        source = source,
-                        entry =
-                            FeedCardTranslationEntry(
-                                item = displayItem,
-                                isComplete = updatedCached.isFullyCached,
-                            ),
-                    )
-                }
-            } finally {
-                inFlightFeedCardTranslations.remove(request)
+        try {
+            val cached =
+                translationManager.getCachedTranslatedFeedListItem(
+                    item = item,
+                    settings = config.settings,
+                    targetLanguage = config.targetLanguage,
+                    titleOnly = true,
+                )
+            if (!isCurrentFeedCardTranslationConfig(config)) {
+                return
             }
+
+            if (cached.hasCachedTranslation && config.showTranslatedTitles) {
+                updateTranslatedFeedCard(
+                    source = source,
+                    entry =
+                        FeedCardTranslationEntry(
+                            item = cached.item,
+                            sourceTitle = item.title,
+                            isComplete = cached.isFullyCached,
+                        ),
+                )
+            }
+
+            if (cached.isFullyCached) {
+                return
+            }
+
+            if (!allowNetwork) {
+                return
+            }
+
+            if (config.settings.isLocalTranslation &&
+                !localTranslator.canTranslateWithoutBergamotDownload(
+                    content = item.title,
+                    targetLanguage = config.targetLanguage,
+                    preserveHtml = false,
+                )
+            ) {
+                return
+            }
+
+            val translatedItem =
+                translationManager.translateFeedListItem(
+                    item = item,
+                    settings = config.settings,
+                    targetLanguage = config.targetLanguage,
+                    titleOnly = true,
+                )
+            val updatedCached =
+                translationManager.getCachedTranslatedFeedListItem(
+                    item = item,
+                    settings = config.settings,
+                    targetLanguage = config.targetLanguage,
+                    titleOnly = true,
+                )
+            if (!isCurrentFeedCardTranslationConfig(config)) {
+                return
+            }
+            val displayItem =
+                when {
+                    updatedCached.hasCachedTranslation -> updatedCached.item
+                    translatedItem != item -> translatedItem
+                    else -> null
+                }
+
+            if (displayItem != null && config.showTranslatedTitles && isCurrentFeedCardTranslationConfig(config)) {
+                updateTranslatedFeedCard(
+                    source = source,
+                    entry =
+                        FeedCardTranslationEntry(
+                            item = displayItem,
+                            sourceTitle = item.title,
+                            isComplete = updatedCached.isFullyCached,
+                        ),
+                )
+            }
+        } finally {
+            inFlightFeedCardTranslations.remove(request)
         }
     }
 
     private fun currentFeedCardTranslationConfig(): FeedCardTranslationConfig? =
         feedCardTranslationConfig(
             enabled = repository.translateArticlePreviewsByDefault.value,
+            showTranslatedTitles = repository.showTranslatedFeedTitles.value,
             settings = repository.translationApiSettings.value,
             targetLanguage = repository.preferredTranslationLanguage.value,
-        ).takeIf(FeedCardTranslationConfig::isActive)
+        ).takeIf(FeedCardTranslationConfig::canDisplayCachedTitles)
+
+    private fun isCurrentFeedCardTranslationConfig(config: FeedCardTranslationConfig): Boolean =
+        feedCardTranslationConfig(
+            enabled = repository.translateArticlePreviewsByDefault.value,
+            showTranslatedTitles = repository.showTranslatedFeedTitles.value,
+            settings = repository.translationApiSettings.value,
+            targetLanguage = repository.preferredTranslationLanguage.value,
+        ) == config
 
     private fun feedCardTranslationConfig(
         enabled: Boolean,
+        showTranslatedTitles: Boolean,
         settings: OpenAISettings,
         targetLanguage: String,
     ): FeedCardTranslationConfig =
         FeedCardTranslationConfig(
             enabled = enabled,
+            showTranslatedTitles = showTranslatedTitles,
             settings = settings,
             targetLanguage = targetLanguage.trim(),
         )
@@ -648,6 +723,7 @@ class FeedViewModel(
     }
 
     override fun onCleared() {
+        allTitleTranslationJob?.cancel()
         super.onCleared()
         ttsStateHolder.shutdown()
     }
@@ -738,6 +814,7 @@ interface FeedScreenViewState {
 
 private data class FeedCardTranslationConfig(
     val enabled: Boolean,
+    val showTranslatedTitles: Boolean,
     val settings: OpenAISettings,
     val targetLanguage: String,
 )
@@ -758,30 +835,28 @@ class TranslatedFeedCards internal constructor(
 
 private fun FeedCardTranslationConfig.isActive(): Boolean = enabled && settings.canUseAsTranslationApi && targetLanguage.isNotBlank()
 
+private fun FeedCardTranslationConfig.canDisplayCachedTitles(): Boolean = showTranslatedTitles && settings.canUseAsTranslationApi && targetLanguage.isNotBlank()
+
 private data class FeedCardTranslationRequest(
     val itemId: Long,
     val sourceTitle: String,
-    val sourceSnippet: String,
     val settings: OpenAISettings,
     val targetLanguage: String,
 )
 
 private data class FeedCardTranslationEntry(
     val item: FeedListItem,
+    val sourceTitle: String,
     val isComplete: Boolean,
 )
 
 internal data class FeedCardSource(
     val itemId: Long,
-    val title: String,
-    val snippet: String,
 ) {
     companion object {
         fun from(item: FeedListItem): FeedCardSource =
             FeedCardSource(
                 itemId = item.id,
-                title = item.title,
-                snippet = item.snippet,
             )
     }
 }

@@ -248,4 +248,12 @@
     <string name="one_minute">%1$s minutė</string>
     <string name="skip_duplicate_articles">Praleisti atsikartojančius straipsnius</string>
     <string name="show_reading_time">Rodyti likusį skaitymo laiką</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Rekomenduojama: deepseek-flash greitam ir tiksliam finansinių naujienų vertimui. Modelis ir galinis taškas užpildyti iš anksto; įveskite API raktą.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash vertimas</string>
+    <string name="provider_qwen_mt_hint">Rekomenduojama: qwen-mt-flash geram spartos ir kokybės balansui. Modelis ir galinis taškas užpildyti iš anksto; įveskite API raktą.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT automatiškai naudoja specialius vertimo nustatymus ir finansų sritį; bendras sistemos raginimas nesiunčiamas.</string>
+    <string name="translate_all_article_titles_description">Atidarius programą fone išverčiamos visos talpykloje nesančios straipsnių antraštės. Talpykloje esančios antraštės dar kartą neprašomos.</string>
+    <string name="show_translated_feed_titles">Rodyti išverstas antraštes</string>
+    <string name="show_translated_feed_titles_description">Išjungus automatinį vertimą toliau rodyti jau išverstas ir talpykloje išsaugotas antraštes.</string>
 </resources>

@@ -249,4 +249,12 @@
     <string name="export_saved_articles">Xuất các bài viết đã lưu</string>
     <string name="skip_duplicate_articles">Bỏ qua bài viết trùng lặp</string>
     <string name="touch_to_play_audio">Chạm để phát âm thanh</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Đề xuất: deepseek-flash để dịch tin tức tài chính nhanh và chính xác. Mô hình và endpoint đã được điền sẵn; hãy nhập khóa API của bạn.</string>
+    <string name="provider_qwen_mt">Bản dịch Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Đề xuất: qwen-mt-flash để cân bằng tốt giữa tốc độ và chất lượng. Mô hình và endpoint đã được điền sẵn; hãy nhập khóa API của bạn.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT tự động sử dụng cài đặt dịch chuyên dụng và miền tài chính; không gửi lời nhắc hệ thống chung.</string>
+    <string name="translate_all_article_titles_description">Khi mở ứng dụng, tất cả tiêu đề bài viết chưa được lưu trong bộ nhớ đệm sẽ được dịch ở chế độ nền. Các tiêu đề đã lưu trong bộ nhớ đệm sẽ không được yêu cầu lại.</string>
+    <string name="show_translated_feed_titles">Hiển thị tiêu đề đã dịch</string>
+    <string name="show_translated_feed_titles_description">Tiếp tục hiển thị các tiêu đề đã được dịch và lưu trong bộ nhớ đệm khi tắt dịch tự động.</string>
 </resources>

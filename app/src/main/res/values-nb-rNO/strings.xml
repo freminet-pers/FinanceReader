@@ -252,4 +252,12 @@
     <string name="azure_api_version">Azure API-versjon</string>
     <string name="touch_to_play_audio">Trykk for å spille av lyd</string>
     <string name="show_title_unread_count">Vis antall uleste artikler i tittelen</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Anbefalt: deepseek-flash for rask og nøyaktig oversettelse av finansnyheter. Modellen og endepunktet er forhåndsutfylt; skriv inn API-nøkkelen din.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash-oversettelse</string>
+    <string name="provider_qwen_mt_hint">Anbefalt: qwen-mt-flash for en god balanse mellom hastighet og kvalitet. Modellen og endepunktet er forhåndsutfylt; skriv inn API-nøkkelen din.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT bruker automatisk egne oversettelsesinnstillinger og finansdomenet; den generelle systemmeldingen sendes ikke.</string>
+    <string name="translate_all_article_titles_description">Når appen åpnes, oversettes alle artikkeltitler som ikke er bufret, i bakgrunnen. Bufrede titler blir ikke forespurt på nytt.</string>
+    <string name="show_translated_feed_titles">Vis oversatte titler</string>
+    <string name="show_translated_feed_titles_description">Vis fortsatt titler som allerede er oversatt og bufret når automatisk oversettelse er slått av.</string>
 </resources>

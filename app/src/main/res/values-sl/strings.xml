@@ -284,4 +284,12 @@
     <string name="summarize_on_open">Povzemi ob odprtju</string>
     <string name="feed_search_suggestions_header">Predlogi</string>
     <string name="openai_settings_info">Podpira mnogo AI ponudnikov, a ne vseh</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Priporočeno: deepseek-flash za hiter in natančen prevod finančnih novic. Model in končna točka sta vnaprej izpolnjena; vnesite svoj ključ API.</string>
+    <string name="provider_qwen_mt">Prevod Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Priporočeno: qwen-mt-flash za dobro ravnovesje med hitrostjo in kakovostjo. Model in končna točka sta vnaprej izpolnjena; vnesite svoj ključ API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT samodejno uporablja namenske nastavitve prevajanja in finančno domeno; splošni sistemski poziv ni poslan.</string>
+    <string name="translate_all_article_titles_description">Ob odprtju aplikacije se v ozadju prevedejo vsi naslovi člankov, ki niso predpomnjeni. Predpomnjeni naslovi se ne zahtevajo znova.</string>
+    <string name="show_translated_feed_titles">Prikaži prevedene naslove</string>
+    <string name="show_translated_feed_titles_description">Ko je samodejno prevajanje izklopljeno, še naprej prikazuj že prevedene in predpomnjene naslove.</string>
 </resources>

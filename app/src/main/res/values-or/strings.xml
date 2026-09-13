@@ -30,4 +30,12 @@
     <string name="battery_optimization_disabled">ବନ୍ଦ</string>
     <string name="battery_optimization_enabled">ଚାଲୁ</string>
     <string name="device_sync">ଡିଵାଇସ୍ ସୀଙ୍କ୍</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">ସୁପାରିଶ: ଆର୍ଥିକ ଖବରକୁ ଶୀଘ୍ର ଏବଂ ସଠିକ୍ ଅନୁବାଦ ପାଇଁ deepseek-flash। ମଡେଲ୍ ଏବଂ ଏଣ୍ଡପଏଣ୍ଟ ପୂର୍ବରୁ ପୂରଣ ହୋଇଛି; ଆପଣଙ୍କ API କୀ ପ୍ରବେଶ କରନ୍ତୁ।</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash ଅନୁବାଦ</string>
+    <string name="provider_qwen_mt_hint">ସୁପାରିଶ: ଗତି ଏବଂ ଗୁଣବତ୍ତାର ଭଲ ସନ୍ତୁଳନ ପାଇଁ qwen-mt-flash। ମଡେଲ୍ ଏବଂ ଏଣ୍ଡପଏଣ୍ଟ ପୂର୍ବରୁ ପୂରଣ ହୋଇଛି; ଆପଣଙ୍କ API କୀ ପ୍ରବେଶ କରନ୍ତୁ।</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT ସ୍ୱୟଂଚାଳିତ ଭାବେ ନିର୍ଦ୍ଦିଷ୍ଟ ଅନୁବାଦ ସେଟିଂ ଏବଂ ଆର୍ଥିକ ଡୋମେନ୍ ବ୍ୟବହାର କରେ; ସାଧାରଣ ସିଷ୍ଟମ୍ ପ୍ରମ୍ପ୍ଟ ପଠାଯାଏ ନାହିଁ।</string>
+    <string name="translate_all_article_titles_description">ଆପ୍ ଖୋଲିଲେ, କ୍ୟାଶ୍ ହୋଇନଥିବା ସମସ୍ତ ଲେଖାର ଶୀର୍ଷକ ପୃଷ୍ଠଭୂମିରେ ଅନୁବାଦ ହୁଏ। କ୍ୟାଶ୍ ହୋଇଥିବା ଶୀର୍ଷକ ପୁଣି ଅନୁରୋଧ ହୁଏ ନାହିଁ।</string>
+    <string name="show_translated_feed_titles">ଅନୁବାଦିତ ଶୀର୍ଷକ ଦେଖାନ୍ତୁ</string>
+    <string name="show_translated_feed_titles_description">ସ୍ୱୟଂଚାଳିତ ଅନୁବାଦ ବନ୍ଦ ଥିଲେ ମଧ୍ୟ ପୂର୍ବରୁ ଅନୁବାଦ ଏବଂ କ୍ୟାଶ୍ ହୋଇଥିବା ଶୀର୍ଷକ ଦେଖାଇ ରଖନ୍ତୁ।</string>
 </resources>

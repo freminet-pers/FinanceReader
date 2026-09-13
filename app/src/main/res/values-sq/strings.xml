@@ -204,4 +204,12 @@
     <string name="few_feeds">Prurjet %1$s</string>
     <string name="many_feeds">Prurjet %1$s</string>
     <string name="other_feeds">Prurjet %1$s</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Rekomandohet: deepseek-flash për përkthim të shpejtë dhe të saktë të lajmeve financiare. Modeli dhe pika fundore janë plotësuar paraprakisht; futni çelësin tuaj API.</string>
+    <string name="provider_qwen_mt">Përkthim Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Rekomandohet: qwen-mt-flash për një ekuilibër të mirë mes shpejtësisë dhe cilësisë. Modeli dhe pika fundore janë plotësuar paraprakisht; futni çelësin tuaj API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT përdor automatikisht cilësime të posaçme për përkthimin dhe domenin financiar; kërkesa e përgjithshme e sistemit nuk dërgohet.</string>
+    <string name="translate_all_article_titles_description">Kur hapet aplikacioni, në sfond përkthehen të gjithë titujt e artikujve që nuk janë në cache. Titujt në cache nuk kërkohen përsëri.</string>
+    <string name="show_translated_feed_titles">Shfaq titujt e përkthyer</string>
+    <string name="show_translated_feed_titles_description">Vazhdo të shfaqësh titujt e përkthyer dhe të ruajtur në cache kur përkthimi automatik është i çaktivizuar.</string>
 </resources>

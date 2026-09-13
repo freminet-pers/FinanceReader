@@ -250,4 +250,12 @@
     <string name="feed_item_style_compact_card">कॉम्पैक्ट कार्ड</string>
     <string name="touch_to_play_audio">ऑडियो चलाने के लिए छुएं</string>
     <string name="show_title_unread_count">शीर्षक में अपठित आलेखों की संख्या दिखाएं</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">सुझाव: वित्तीय समाचारों के तेज़ और सटीक अनुवाद के लिए deepseek-flash। मॉडल और एंडपॉइंट पहले से भरे हैं; अपनी API कुंजी दर्ज करें।</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash अनुवाद</string>
+    <string name="provider_qwen_mt_hint">सुझाव: गति और गुणवत्ता के अच्छे संतुलन के लिए qwen-mt-flash। मॉडल और एंडपॉइंट पहले से भरे हैं; अपनी API कुंजी दर्ज करें।</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT स्वचालित रूप से समर्पित अनुवाद सेटिंग और वित्तीय डोमेन का उपयोग करता है; सामान्य सिस्टम प्रॉम्प्ट नहीं भेजा जाता।</string>
+    <string name="translate_all_article_titles_description">ऐप खोलने पर कैश न किए गए सभी लेख शीर्षकों का बैकग्राउंड में अनुवाद करें। कैश किए गए शीर्षकों के लिए दोबारा अनुरोध नहीं किया जाता।</string>
+    <string name="show_translated_feed_titles">अनुवादित शीर्षक दिखाएँ</string>
+    <string name="show_translated_feed_titles_description">स्वचालित अनुवाद बंद होने पर पहले से अनुवादित और कैश किए गए शीर्षक दिखाते रहें।</string>
 </resources>

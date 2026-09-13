@@ -309,6 +309,11 @@
     <string name="ai_not_configured">未配置</string>
     <string name="api_provider_summary">提供商：%1$s</string>
     <string name="provider_none">无</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">推荐模型：deepseek-flash，速度快、财经翻译准确。模型和接口地址已自动填写，只需输入 API 密钥。</string>
+    <string name="provider_qwen_mt">通义千问翻译（Qwen-MT Flash）</string>
+    <string name="provider_qwen_mt_hint">推荐模型：qwen-mt-flash，速度和准确度均衡。模型和接口地址已自动填写，只需输入 API 密钥。</string>
+    <string name="provider_qwen_mt_prompt_hint">千问翻译模型会自动使用专用翻译参数和财经领域设置，不发送通用系统提示词。</string>
     <string name="provider_openai_compatible">OpenAI 或兼容</string>
     <string name="provider_azure_openai">Azure OpenAI</string>
     <string name="provider_deepl">DeepL</string>
@@ -333,7 +338,10 @@
     <string name="preferred_translation_language_description">使用语言名称或代码，例如 Spanish、es、French 或 fr-CA。</string>
     <string name="translation_language_placeholder">例如：English 或 en</string>
     <string name="set_translation_language_first">在 AI 设置中设置首选翻译语言</string>
-    <string name="translate_feed_cards_by_default">翻译文章预览</string>
+    <string name="translate_feed_cards_by_default">自动翻译全部文章标题</string>
+    <string name="translate_all_article_titles_description">打开应用后在后台自动翻译所有未缓存的文章标题；已缓存的标题不会重复请求。</string>
+    <string name="show_translated_feed_titles">显示已翻译标题</string>
+    <string name="show_translated_feed_titles_description">关闭自动翻译后，仍显示已经翻译并缓存的标题。</string>
     <string name="translate_articles_by_default">默认翻译文章</string>
     <string name="provider_local_translation">本地</string>
     <string name="preferred_translation_language_fallback">首选语言</string>

@@ -63,4 +63,12 @@
     <string name="mark_as_unread">చదవనట్టు గుర్తుపెట్టు</string>
     <string name="add_feed_search_hint">ఫీడ్ యూఆర్ఎల్</string>
     <string name="add_feed">ఫీడ్ జోడించండి</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">సిఫార్సు: ఆర్థిక వార్తలను వేగంగా, కచ్చితంగా అనువదించడానికి deepseek-flash. మోడల్ మరియు ఎండ్‌పాయింట్ ముందే నింపబడ్డాయి; మీ API కీని నమోదు చేయండి.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash అనువాదం</string>
+    <string name="provider_qwen_mt_hint">సిఫార్సు: వేగం మరియు నాణ్యత మధ్య మంచి సమతుల్యత కోసం qwen-mt-flash. మోడల్ మరియు ఎండ్‌పాయింట్ ముందే నింపబడ్డాయి; మీ API కీని నమోదు చేయండి.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT ప్రత్యేక అనువాద సెట్టింగ్‌లు మరియు ఆర్థిక డొమైన్‌ను ఆటోమేటిక్‌గా ఉపయోగిస్తుంది; సాధారణ సిస్టమ్ ప్రాంప్ట్ పంపబడదు.</string>
+    <string name="translate_all_article_titles_description">యాప్ తెరిచినప్పుడు, కాష్ చేయని అన్ని కథన శీర్షికలను బ్యాక్‌గ్రౌండ్‌లో అనువదిస్తుంది. కాష్ చేసిన శీర్షికలు మళ్లీ అభ్యర్థించబడవు.</string>
+    <string name="show_translated_feed_titles">అనువదించిన శీర్షికలను చూపు</string>
+    <string name="show_translated_feed_titles_description">ఆటోమేటిక్ అనువాదం ఆపివేసినా ఇప్పటికే అనువదించి కాష్ చేసిన శీర్షికలను చూపిస్తూ ఉండండి.</string>
 </resources>

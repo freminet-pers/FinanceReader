@@ -20,6 +20,17 @@ class QwenMtHelpersTest {
     }
 
     @Test
+    fun detectsDeepSeekV41Models() {
+        assertTrue(OpenAISettings(modelId = "deepseek-flash").isDeepSeekV41Model)
+        assertTrue(OpenAISettings(modelId = "deepseek-v4-flash").isDeepSeekV41Model)
+        assertTrue(OpenAISettings(modelId = "deepseek-v4-flash-vision-exp").isDeepSeekV41Model)
+        assertTrue(OpenAISettings(modelId = "deepseek-v4-pro").isDeepSeekV41Model)
+        assertTrue(OpenAISettings(modelId = "DeepSeek-V4.1-Flash").isDeepSeekV41Model)
+        assertFalse(OpenAISettings(modelId = "deepseek-chat").isDeepSeekV41Model)
+        assertFalse(OpenAISettings(modelId = "deepseek-v3").isDeepSeekV41Model)
+    }
+
+    @Test
     fun mapsLanguageNamesAndCodes() {
         assertEquals("Chinese", toQwenMtLanguageName("Simplified Chinese"))
         assertEquals("Chinese", toQwenMtLanguageName("中文"))

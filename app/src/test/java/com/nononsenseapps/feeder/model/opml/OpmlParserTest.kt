@@ -101,6 +101,7 @@ class OpmlParserTest : DIAware {
                         UserSettings.SETTING_TRANSLATION_API_AZURE_DEPLOYMENT_ID -> "translation-deployment"
                         UserSettings.SETTING_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS -> "90"
                         UserSettings.SETTING_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT -> "true"
+                        UserSettings.SETTING_SHOW_TRANSLATED_FEED_TITLES -> "true"
                         UserSettings.SETTING_TRANSLATE_ARTICLES_BY_DEFAULT -> "true"
                     },
             )
@@ -157,6 +158,7 @@ class OpmlParserTest : DIAware {
                 settingsStore.translationApiSettings
                 settingsStore.setTranslationApiSettings(any())
                 settingsStore.setTranslateArticlePreviewsByDefault(true)
+                settingsStore.setShowTranslatedFeedTitles(true)
                 settingsStore.setTranslateArticlesByDefault(true)
                 settingsStore.setApplyBlocklistToSummaries(true)
             }

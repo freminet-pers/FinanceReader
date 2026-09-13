@@ -340,4 +340,12 @@
     <string name="failed_to_fetch_full_article_too_large">Artikel terlalu besar. Buka di peramban?</string>
     <string name="device_sync_beta_warning">PERINGATAN! Ini adalah fitur Beta. Ekspor dan cadangkan seluruh feed Anda terlebih dulu.</string>
     <string name="local_translation_requires_android_12">Penerjemahan lokal membutuhkan Android 12 atau yang lebih baru.</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Disarankan: deepseek-flash untuk menerjemahkan berita keuangan dengan cepat dan akurat. Model dan endpoint sudah terisi; masukkan kunci API Anda.</string>
+    <string name="provider_qwen_mt">Terjemahan Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Disarankan: qwen-mt-flash untuk keseimbangan kecepatan dan kualitas yang baik. Model dan endpoint sudah terisi; masukkan kunci API Anda.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT otomatis menggunakan pengaturan terjemahan khusus dan domain keuangan; prompt sistem umum tidak dikirim.</string>
+    <string name="translate_all_article_titles_description">Saat aplikasi dibuka, terjemahkan di latar belakang semua judul artikel yang belum di-cache. Judul yang sudah di-cache tidak diminta lagi.</string>
+    <string name="show_translated_feed_titles">Tampilkan judul yang diterjemahkan</string>
+    <string name="show_translated_feed_titles_description">Tetap tampilkan judul yang sudah diterjemahkan dan di-cache saat terjemahan otomatis dimatikan.</string>
 </resources>

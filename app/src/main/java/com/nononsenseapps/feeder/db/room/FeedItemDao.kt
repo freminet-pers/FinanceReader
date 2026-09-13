@@ -215,6 +215,17 @@ interface FeedItemDao {
         SELECT $PREVIEW_COLUMNS
         FROM feed_items
         LEFT JOIN feeds ON feed_items.feed_id = feeds.id
+        WHERE block_time IS NULL
+        ORDER BY $FEED_ITEM_LIST_SORT_ORDER_DESC
+        """,
+    )
+    fun allPreviewsForTitleTranslation(): Flow<List<PreviewItem>>
+
+    @Query(
+        """
+        SELECT $PREVIEW_COLUMNS
+        FROM feed_items
+        LEFT JOIN feeds ON feed_items.feed_id = feeds.id
         WHERE feed_id IS :feedId
           AND (read_time is null or read_time >= :minReadTime)
           AND bookmarked in (1, :bookmarked)

@@ -281,4 +281,12 @@
     <string name="time_out">Χρονικό όριο (δευτερόλεπτα)</string>
     <string name="time_out_validation_error">Το χρονικό όριο πρέπει να είναι μεταξύ 30 και 600 δευτερολέπτων</string>
     <string name="time_out_placeholder">Χρονικό όριο για αιτήσεις OpenAI</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Προτείνεται: deepseek-flash για γρήγορη και ακριβή μετάφραση οικονομικών ειδήσεων. Το μοντέλο και το endpoint είναι ήδη συμπληρωμένα· εισαγάγετε το API key σας.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Προτείνεται: qwen-mt-flash για καλή ισορροπία ταχύτητας και ποιότητας. Το μοντέλο και το endpoint είναι ήδη συμπληρωμένα· εισαγάγετε το API key σας.</string>
+    <string name="provider_qwen_mt_prompt_hint">Το Qwen-MT χρησιμοποιεί αυτόματα ειδικές ρυθμίσεις μετάφρασης και τον οικονομικό τομέα· δεν αποστέλλεται η γενική προτροπή συστήματος.</string>
+    <string name="translate_all_article_titles_description">Κατά το άνοιγμα της εφαρμογής, μεταφράζονται στο παρασκήνιο όλοι οι τίτλοι άρθρων που δεν έχουν αποθηκευτεί στην cache. Οι τίτλοι στην cache δεν ζητούνται ξανά.</string>
+    <string name="show_translated_feed_titles">Εμφάνιση μεταφρασμένων τίτλων</string>
+    <string name="show_translated_feed_titles_description">Συνεχίστε να εμφανίζετε τίτλους που έχουν ήδη μεταφραστεί και αποθηκευτεί στην cache όταν η αυτόματη μετάφραση είναι απενεργοποιημένη.</string>
 </resources>

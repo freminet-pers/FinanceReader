@@ -242,4 +242,12 @@
     <string name="two_tags">%1$s etîketan</string>
     <string name="content_is_not_html">Naverok ne HTML e</string>
     <string name="other_tags">%1$s etîketan</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">پێشنیارکراو: deepseek-flash بۆ وەرگێڕانی خێرا و وردی هەواڵە داراییەکان. مۆدێل و خاڵی کۆتایی پێشتر پڕکراونەتەوە؛ کلیلی API ـەکەت بنووسە.</string>
+    <string name="provider_qwen_mt">وەرگێڕانی Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">پێشنیارکراو: qwen-mt-flash بۆ هاوسەنگییەکی باش لەنێوان خێرایی و کوالێتی. مۆدێل و خاڵی کۆتایی پێشتر پڕکراونەتەوە؛ کلیلی API ـەکەت بنووسە.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT بە شێوەی خۆکار ڕێکخستنە تایبەتەکانی وەرگێڕان و بوارە داراییەکە بەکاردێنێت؛ پرۆمپتی سیستەمی گشتی نانێردرێت.</string>
+    <string name="translate_all_article_titles_description">کاتێک ئەپەکە دەکرێتەوە، هەموو سەردێڕە نەخەزنکراوەکانی بابەتەکان لە پاشبنەما وەردەگێڕدرێن. سەردێڕە خەزنکراوەکان دووبارە داوا ناکرێن.</string>
+    <string name="show_translated_feed_titles">پیشاندانی سەردێڕە وەرگێڕدراوەکان</string>
+    <string name="show_translated_feed_titles_description">کاتێک وەرگێڕانی خۆکار ناچالاکە، هەر سەردێڕێک کە پێشتر وەرگێڕدراوە و خەزنکراوە پیشان بدە.</string>
 </resources>

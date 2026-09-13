@@ -340,4 +340,12 @@
     <string name="translate_articles_by_default">Traduza arquivos por padrão</string>
     <string name="widget_title">Feeder</string>
     <string name="widget_refreshing">Recarregar</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Recomendado: deepseek-flash para traduzir notícias financeiras com rapidez e precisão. O modelo e o endpoint já estão preenchidos; insira sua chave de API.</string>
+    <string name="provider_qwen_mt">Tradução Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Recomendado: qwen-mt-flash para um bom equilíbrio entre velocidade e qualidade. O modelo e o endpoint já estão preenchidos; insira sua chave de API.</string>
+    <string name="provider_qwen_mt_prompt_hint">O Qwen-MT usa automaticamente configurações de tradução específicas e o domínio financeiro; o prompt geral do sistema não é enviado.</string>
+    <string name="translate_all_article_titles_description">Ao abrir o app, traduza em segundo plano todos os títulos de artigos que não estejam em cache. Títulos já armazenados em cache não são solicitados novamente.</string>
+    <string name="show_translated_feed_titles">Mostrar títulos traduzidos</string>
+    <string name="show_translated_feed_titles_description">Continuar mostrando os títulos já traduzidos e armazenados em cache quando a tradução automática estiver desativada.</string>
 </resources>

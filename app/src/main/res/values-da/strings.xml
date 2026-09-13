@@ -318,4 +318,12 @@
     <string name="translation_endpoint">Oversættelseslutpunkt</string>
     <string name="device_sync_beta_warning">ADVARSEL! Dette er en betafunktion. Udfør først en OPML-eksport af alle dine feeds, og gem den som en sikkerhedskopi.</string>
     <string name="enter_api_key_before_saving">Indtast en API-nøgle, før du gemmer.</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Anbefalet: deepseek-flash til hurtig og præcis oversættelse af finansnyheder. Modellen og slutpunktet er udfyldt på forhånd; indtast din API-nøgle.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Anbefalet: qwen-mt-flash for en god balance mellem hastighed og kvalitet. Modellen og slutpunktet er udfyldt på forhånd; indtast din API-nøgle.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT bruger automatisk dedikerede oversættelsesindstillinger og finansdomænet; den generelle systemprompt sendes ikke.</string>
+    <string name="translate_all_article_titles_description">Når appen åbnes, oversættes alle artikeltitler uden cache i baggrunden. Titler, der allerede er i cachen, anmodes ikke igen.</string>
+    <string name="show_translated_feed_titles">Vis oversatte titler</string>
+    <string name="show_translated_feed_titles_description">Bliv ved med at vise titler, der allerede er oversat og gemt i cachen, når automatisk oversættelse er slået fra.</string>
 </resources>

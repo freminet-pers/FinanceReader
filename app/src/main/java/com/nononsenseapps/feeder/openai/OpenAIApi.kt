@@ -20,6 +20,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -27,7 +30,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.io.IOException
+import java.net.URI
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class OpenAIApi(
@@ -42,6 +47,9 @@ class OpenAIApi(
             ignoreUnknownKeys = true
             explicitNulls = false
         }
+
+    /** Raw JSON 请求共用连接池；每个分块新建 OkHttpClient 会浪费 TLS/连接复用。 */
+    private val rawHttpClients = ConcurrentHashMap<Int, OkHttpClient>()
 
     @Serializable
     data class SummaryResponse(
@@ -99,6 +107,43 @@ class OpenAIApi(
     @Serializable
     private data class QwenMtChoice(
         val message: QwenMtMessage? = null,
+    )
+
+    /** DeepSeek V4.1 Chat Completions 的额外思考模式开关。 */
+    @Serializable
+    private data class DeepSeekThinking(
+        val type: String,
+    )
+
+    @Serializable
+    private data class DeepSeekMessage(
+        val role: String,
+        val content: String,
+    )
+
+    @Serializable
+    private data class DeepSeekChatRequest(
+        val model: String,
+        val messages: List<DeepSeekMessage>,
+        val thinking: DeepSeekThinking,
+        val stream: Boolean,
+    )
+
+    @Serializable
+    private data class DeepSeekChatResponse(
+        val choices: List<DeepSeekChoice> = emptyList(),
+    )
+
+    @Serializable
+    private data class DeepSeekChoice(
+        val message: DeepSeekResponseMessage? = null,
+        @SerialName("finish_reason") val finishReason: String? = null,
+    )
+
+    @Serializable
+    private data class DeepSeekResponseMessage(
+        val content: String? = null,
+        @SerialName("reasoning_content") val reasoningContent: String? = null,
     )
 
     sealed interface SummaryResult {
@@ -159,11 +204,18 @@ class OpenAIApi(
         private val LANG_REGEX = Regex("^Lang: \"?([a-zA-Z_-]+)\"?$")
     }
 
-    private fun okHttpClient(timeoutSeconds: Int): OkHttpClient =
-        OkHttpClient
-            .Builder()
-            .callTimeout(timeoutSeconds.coerceIn(30, 600).toLong(), TimeUnit.SECONDS)
-            .build()
+    private fun okHttpClient(timeoutSeconds: Int): OkHttpClient {
+        val normalizedTimeout = timeoutSeconds.coerceIn(30, 600)
+        return rawHttpClients.computeIfAbsent(normalizedTimeout) { timeout ->
+            OkHttpClient
+                .Builder()
+                .connectTimeout(RAW_HTTP_CONNECT_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+                .readTimeout(timeout.toLong(), TimeUnit.SECONDS)
+                .writeTimeout(RAW_HTTP_WRITE_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+                .callTimeout(timeout.toLong(), TimeUnit.SECONDS)
+                .build()
+        }
+    }
 
     suspend fun listModelIds(settings: OpenAISettings): ModelsResult {
         if (settings.isLocalTranslation) {
@@ -185,6 +237,12 @@ class OpenAIApi(
             if (settings.azureDeploymentId.isBlank()) {
                 return ModelsResult.AzureDeploymentIdRequired
             }
+        }
+        // DeepSeek V4.1 exposes the model id through the chat endpoint, while
+        // model-list support is not required for translation. Avoid making a
+        // second /models request that can fail on an otherwise valid setup.
+        if (settings.isDeepSeekV41Model || settings.isQwenMtModel) {
+            return ModelsResult.Success(ids = listOf(settings.modelId.trim()))
         }
         return try {
             openAIClientFactory(settings)
@@ -287,6 +345,16 @@ class OpenAIApi(
                 sourceLangHint = sourceLangHint,
             )
         }
+        if (settings.isDeepSeekV41Model) {
+            return translateWithDeepSeek(
+                content = content,
+                targetLanguage = targetLanguage,
+                settings = settings,
+                preserveHtml = preserveHtml,
+                systemPrompt = systemPrompt,
+                sourceLangHint = sourceLangHint,
+            )
+        }
         return translateWithOpenAI(
             content = content,
             targetLanguage = targetLanguage,
@@ -317,6 +385,16 @@ class OpenAIApi(
                 sourceLanguage = "English",
                 targetLanguage = "Chinese",
                 settings = settings,
+            )
+        }
+        if (settings.isDeepSeekV41Model) {
+            return translateDeepSeekChunkWithRetry(
+                content = "ping",
+                targetLanguage = "en",
+                settings = settings,
+                preserveHtml = false,
+                systemPrompt = TEST_CONNECTION_SYSTEM_PROMPT,
+                sourceLangHint = "en",
             )
         }
         return translateWithOpenAI(
@@ -355,6 +433,141 @@ class OpenAIApi(
             content = translatedChunks.joinToString(separator = if (preserveHtml) "\n" else "\n\n"),
             detectedLanguage = "",
         )
+    }
+
+    /**
+     * DeepSeek V4.1 原生适配路径。
+     *
+     * V4.1 Flash 默认开启 thinking，且通过 OpenAI SDK 需要把 thinking 放到 extra_body；
+     * openai-kotlin 4.1.0 没有 extra_body 字段。因此这里用同一套 OkHttp JSON 通道发送
+     * `thinking.type=disabled`，翻译只保留最终译文，避免把推理时间和 token 花在翻译上。
+     */
+    private suspend fun translateWithDeepSeek(
+        content: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+        preserveHtml: Boolean,
+        systemPrompt: String,
+        sourceLangHint: String,
+    ): TranslationResult {
+        if (settings.baseUrl.isInsecureNonLocalUrl()) {
+            return TranslationResult.Error(content = "The endpoint must use https://")
+        }
+
+        val chunks = chunkTranslationContent(content = content, preserveHtml = preserveHtml)
+        val resolvedPrompt =
+            buildTranslationSystemPrompt(
+                targetLanguage = targetLanguage,
+                preserveHtml = preserveHtml,
+                systemPrompt = systemPrompt,
+                sourceLangHint = sourceLangHint,
+            )
+        val translatedChunks = ArrayList<String>(chunks.size)
+        for (chunk in chunks) {
+            when (
+                val result =
+                    translateDeepSeekChunkWithRetry(
+                        content = chunk,
+                        targetLanguage = targetLanguage,
+                        settings = settings,
+                        preserveHtml = preserveHtml,
+                        systemPrompt = resolvedPrompt,
+                        sourceLangHint = sourceLangHint,
+                    )
+            ) {
+                is TranslationResult.Success -> translatedChunks += result.content
+                is TranslationResult.Error -> return result
+            }
+        }
+        return TranslationResult.Success(
+            content = translatedChunks.joinToString(separator = if (preserveHtml) "\n" else "\n\n"),
+            detectedLanguage = "",
+        )
+    }
+
+    /** DeepSeek V4.1 单块翻译：非流式、关闭 thinking，瞬时失败按统一策略重试。 */
+    private suspend fun translateDeepSeekChunkWithRetry(
+        content: String,
+        targetLanguage: String,
+        settings: OpenAISettings,
+        preserveHtml: Boolean,
+        systemPrompt: String,
+        sourceLangHint: String,
+    ): TranslationResult {
+        var lastError = "Translation failed"
+        for (attempt in 0 until MAX_TRANSLATION_ATTEMPTS) {
+            try {
+                val response =
+                    postJson<DeepSeekChatRequest, DeepSeekChatResponse>(
+                        settings = settings,
+                        url = settings.toDeepSeekChatCompletionsUrl(),
+                        headers = mapOf("Authorization" to "Bearer ${settings.key}"),
+                        requestBody =
+                            DeepSeekChatRequest(
+                                model = settings.modelId.trim(),
+                                messages =
+                                    listOf(
+                                        DeepSeekMessage(
+                                            role = "system",
+                                            content =
+                                                systemPrompt.ifBlank {
+                                                    buildTranslationSystemPrompt(
+                                                        targetLanguage = targetLanguage,
+                                                        preserveHtml = preserveHtml,
+                                                        systemPrompt = "",
+                                                        sourceLangHint = sourceLangHint,
+                                                    )
+                                                },
+                                        ),
+                                        DeepSeekMessage(role = "user", content = content),
+                                    ),
+                                thinking = DeepSeekThinking(type = "disabled"),
+                                stream = false,
+                            ),
+                        failurePrefix = "Translation request failed",
+                    )
+                val choice = response.choices.firstOrNull()
+                val text =
+                    choice
+                        ?.message
+                        ?.content
+                        ?.trim()
+                        .orEmpty()
+                if (text.isNotBlank()) {
+                    return TranslationResult.Success(content = text, detectedLanguage = "")
+                }
+                lastError =
+                    if (choice?.finishReason.equals("length", ignoreCase = true)) {
+                        "Translation response was truncated"
+                    } else {
+                        "Response content is null"
+                    }
+                return TranslationResult.Error(content = lastError)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val message = e.messageOrCause().orEmpty()
+                if (message.isNotBlank()) {
+                    lastError = message
+                }
+                val statusCode = extractHttpStatusCode(lastError)
+                if (statusCode != null && statusCode !in RETRYABLE_STATUS_CODES) {
+                    return TranslationResult.Error(content = lastError)
+                }
+                if (
+                    statusCode == null &&
+                    e !is IOException &&
+                    e !is HttpRequestTimeoutException &&
+                    e !is OpenAITimeoutException
+                ) {
+                    return TranslationResult.Error(content = lastError)
+                }
+            }
+            if (attempt < MAX_TRANSLATION_ATTEMPTS - 1) {
+                delay(RETRY_BACKOFF_MS * (attempt + 1L))
+            }
+        }
+        return TranslationResult.Error(content = lastError)
     }
 
     /**
@@ -426,11 +639,15 @@ class OpenAIApi(
                 val response =
                     postJson<QwenMtChatRequest, QwenMtChatResponse>(
                         settings = settings,
-                        url = settings.baseUrl.trimEnd('/') + "/chat/completions",
+                        url =
+                            settings.baseUrl
+                                .trim()
+                                .trimEnd('/')
+                                .ifBlank { QWEN_MT_API_BASE_URL } + "/chat/completions",
                         headers = mapOf("Authorization" to "Bearer ${settings.key}"),
                         requestBody =
                             QwenMtChatRequest(
-                                model = settings.modelId,
+                                model = settings.modelId.trim(),
                                 messages =
                                     listOf(
                                         QwenMtMessage(
@@ -553,28 +770,12 @@ class OpenAIApi(
                         role = ChatRole.System,
                         messageContent =
                             TextContent(
-                                buildString {
-                                    val effectivePrompt =
-                                        systemPrompt
-                                            .ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT }
-                                    append(
-                                        effectivePrompt
-                                            .replace("{target_language}", targetLanguage.trim())
-                                            .replace(
-                                                "{source_language}",
-                                                sourceLangHint
-                                                    .trim()
-                                                    .ifBlank { "the original language" },
-                                            ),
-                                    )
-                                    if (preserveHtml) {
-                                        append(
-                                            "\n\nThe input contains HTML markup. " +
-                                                "Preserve all HTML tags and their structure exactly; " +
-                                                "translate only the visible text content.",
-                                        )
-                                    }
-                                },
+                                buildTranslationSystemPrompt(
+                                    targetLanguage = targetLanguage,
+                                    preserveHtml = preserveHtml,
+                                    systemPrompt = systemPrompt,
+                                    sourceLangHint = sourceLangHint,
+                                ),
                             ),
                     ),
                     ChatMessage(
@@ -582,8 +783,33 @@ class OpenAIApi(
                         messageContent = TextContent(content),
                     ),
                 ),
-            responseFormat = ChatResponseFormat.Text,
         )
+
+    /** 组装通用与 DeepSeek 原生路径共用的翻译提示词。 */
+    private fun buildTranslationSystemPrompt(
+        targetLanguage: String,
+        preserveHtml: Boolean,
+        systemPrompt: String,
+        sourceLangHint: String,
+    ): String =
+        buildString {
+            val effectivePrompt = systemPrompt.ifBlank { DEFAULT_TRANSLATION_SYSTEM_PROMPT }
+            append(
+                effectivePrompt
+                    .replace("{target_language}", targetLanguage.trim())
+                    .replace(
+                        "{source_language}",
+                        sourceLangHint.trim().ifBlank { "the original language" },
+                    ),
+            )
+            if (preserveHtml) {
+                append(
+                    "\n\nThe input contains HTML markup. " +
+                        "Preserve all HTML tags and their structure exactly; " +
+                        "translate only the visible text content.",
+                )
+            }
+        }
 
     private fun translateWithDeepL(
         settings: OpenAISettings,
@@ -686,9 +912,11 @@ class OpenAIApi(
                     throw httpFailure(failurePrefix, response)
                 }
 
-                json.decodeFromString<ResponseBodyT>(
-                    response.body.string(),
-                )
+                val body = response.body.string()
+                if (body.isBlank()) {
+                    throw IllegalStateException("$failurePrefix: empty response body")
+                }
+                json.decodeFromString<ResponseBodyT>(body)
             }
     }
 
@@ -704,10 +932,40 @@ class OpenAIApi(
     private fun httpFailure(
         prefix: String,
         response: Response,
-    ): IllegalStateException =
-        IllegalStateException(
-            "$prefix: HTTP ${response.code}${response.message.takeIf { it.isNotBlank() }?.let { " $it" } ?: ""}",
+    ): IllegalStateException {
+        val status = "HTTP ${response.code}${response.message.takeIf { it.isNotBlank() }?.let { " $it" } ?: ""}"
+        val providerMessage =
+            response.body
+                .string()
+                .let(::extractProviderErrorMessage)
+                ?.takeIf(String::isNotBlank)
+        return IllegalStateException(
+            "$prefix: $status${providerMessage?.let { ": $it" } ?: ""}",
         )
+    }
+
+    /** 只向 UI 暴露供应商 JSON 中的短错误消息，不把整段响应或请求数据带出去。 */
+    private fun extractProviderErrorMessage(body: String): String? {
+        val root = runCatching { json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return null
+        val candidates =
+            listOf(
+                root["error"]?.let { error ->
+                    if (error is JsonObject) {
+                        (error["message"] as? JsonPrimitive)?.contentOrNull
+                            ?: (error["detail"] as? JsonPrimitive)?.contentOrNull
+                    } else {
+                        (error as? JsonPrimitive)?.contentOrNull
+                    }
+                },
+                (root["message"] as? JsonPrimitive)?.contentOrNull,
+                (root["detail"] as? JsonPrimitive)?.contentOrNull,
+            )
+        return candidates
+            .firstOrNull { !it.isNullOrBlank() }
+            ?.trim()
+            ?.replace(Regex("(?i)bearer\\s+\\S+"), "Bearer ***")
+            ?.take(MAX_PROVIDER_ERROR_LENGTH)
+    }
 
     private fun Throwable.messageOrCause(): String? = message ?: cause?.message
 }
@@ -716,11 +974,30 @@ val OpenAISettings.isQwenMtModel: Boolean
     get() =
         modelId
             .trim()
-            .lowercase()
+            .lowercase(Locale.ROOT)
             .let { id ->
                 id.startsWith("qwen-mt") ||
                     id.startsWith("mt-") ||
                     id.contains("qwen-mt")
+            }
+
+/**
+ * DeepSeek V4/V4.1 models need the provider-specific `thinking` field.
+ * The current public V4.1 Flash model id is `deepseek-flash`; the two V4
+ * aliases and V4 Pro are kept here so existing configurations keep working.
+ */
+val OpenAISettings.isDeepSeekV41Model: Boolean
+    get() =
+        modelId
+            .trim()
+            .lowercase(Locale.ROOT)
+            .let { id ->
+                id == "deepseek-flash" ||
+                    id == "deepseek-v4-flash" ||
+                    id == "deepseek-v4-flash-vision-exp" ||
+                    id == "deepseek-v4-pro" ||
+                    id.contains("deepseek-v4.1") ||
+                    id.contains("deepseek-v4-1")
             }
 
 val OpenAISettings.isAzure: Boolean
@@ -765,7 +1042,7 @@ val OpenAISettings.isBlankConfiguration: Boolean
             azureDeploymentId.isBlank()
 
 fun OpenAISettings.toOpenAIHost(withAzureDeploymentId: Boolean): OpenAIHost =
-    baseUrl.let { baseUrl ->
+    baseUrl.trim().let { baseUrl ->
         when {
             baseUrl.isEmpty() -> OpenAIHost.OpenAI
 
@@ -797,6 +1074,27 @@ fun OpenAISettings.toOpenAIHost(withAzureDeploymentId: Boolean): OpenAIHost =
                 )
         }
     }
+
+/** DeepSeek 官方 OpenAI 格式端点；兼容用户旧配置中的 `/v1` 后缀。 */
+internal fun OpenAISettings.toDeepSeekChatCompletionsUrl(): String {
+    val configuredBaseUrl = baseUrl.trim().trimEnd('/').ifBlank { DEEPSEEK_API_BASE_URL }
+    val normalizedBaseUrl =
+        if (configuredBaseUrl.isOfficialDeepSeekBaseUrl()) {
+            configuredBaseUrl.replace(Regex("/v1$", RegexOption.IGNORE_CASE), "")
+        } else {
+            configuredBaseUrl
+        }
+    return if (normalizedBaseUrl.endsWith("/chat/completions", ignoreCase = true)) {
+        normalizedBaseUrl
+    } else {
+        "$normalizedBaseUrl/chat/completions"
+    }
+}
+
+private fun String.isOfficialDeepSeekBaseUrl(): Boolean =
+    runCatching {
+        URI(this).host.equals("api.deepseek.com", ignoreCase = true)
+    }.getOrDefault(false)
 
 fun OpenAISettings.toDeepLTranslateUrl(): String =
     URLBuilder()
@@ -969,6 +1267,19 @@ private const val RETRY_BACKOFF_MS = 1000L
 /** 可重试的 HTTP 状态码（限流与瞬时服务端错误）。 */
 private val RETRYABLE_STATUS_CODES = setOf(429, 500, 502, 503, 504)
 
+/** DeepSeek 官方 OpenAI 格式入口（V4.1 Flash 的模型名为 `deepseek-flash`）。 */
+internal const val DEEPSEEK_API_BASE_URL = "https://api.deepseek.com"
+internal const val DEEPSEEK_DEFAULT_MODEL_ID = "deepseek-flash"
+
+/** 千问百炼北京地域的公共 OpenAI 兼容入口。 */
+internal const val QWEN_MT_API_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+internal const val QWEN_MT_DEFAULT_MODEL_ID = "qwen-mt-flash"
+
+/** 原生 JSON 通道的网络超时：连接/写入短一些，等待模型输出按用户设置。 */
+private const val RAW_HTTP_CONNECT_TIMEOUT_SECONDS = 30
+private const val RAW_HTTP_WRITE_TIMEOUT_SECONDS = 30
+private const val MAX_PROVIDER_ERROR_LENGTH = 500
+
 /** 分块哨兵：正常文本中几乎不可能出现的控制字符。 */
 private const val CHUNK_SENTINEL = "\u0001"
 
@@ -1050,9 +1361,30 @@ internal fun chunkTranslationContent(
  * 用于拒绝可能泄露 API Key 的非加密端点。
  */
 fun String.isInsecureNonLocalUrl(): Boolean =
-    startsWith("http://", ignoreCase = true) &&
-        !startsWith("http://localhost", ignoreCase = true) &&
-        !startsWith("http://127.", ignoreCase = true) &&
-        !startsWith("http://10.", ignoreCase = true) &&
-        !startsWith("http://192.168.", ignoreCase = true) &&
-        !startsWith("http://172.16.", ignoreCase = true)
+    runCatching {
+        val uri = URI(trim())
+        if (!uri.scheme.equals("http", ignoreCase = true)) {
+            return@runCatching false
+        }
+        val host = uri.host?.lowercase(Locale.ROOT) ?: return@runCatching true
+        !host.isLocalHttpHost()
+    }.getOrDefault(true)
+
+private fun String.isLocalHttpHost(): Boolean {
+    val host = removePrefix("[").removeSuffix("]")
+    if (host == "localhost" || host == "::1") {
+        return true
+    }
+    val octets = host.split('.')
+    if (octets.size != 4 || octets.any { it.toIntOrNull() == null }) {
+        return false
+    }
+    val (first, second) =
+        octets
+            .map(String::toInt)
+            .let { values -> values[0] to values[1] }
+    return first == 10 ||
+        first == 127 ||
+        (first == 172 && second in 16..31) ||
+        (first == 192 && second == 168)
+}

@@ -130,4 +130,12 @@
     <string name="navigation_drawer_close">بستن کشوی ناوبری</string>
     <string name="navigation_drawer_open">باز کردن کشوی ناوبری</string>
     <string name="theme_e_ink">کاغذ الکترونیک</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">پیشنهادشده: deepseek-flash برای ترجمه سریع و دقیق اخبار مالی. مدل و نقطه پایانی از قبل پر شده‌اند؛ کلید API خود را وارد کنید.</string>
+    <string name="provider_qwen_mt">ترجمه Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">پیشنهادشده: qwen-mt-flash برای تعادل مناسب بین سرعت و کیفیت. مدل و نقطه پایانی از قبل پر شده‌اند؛ کلید API خود را وارد کنید.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT به‌صورت خودکار از تنظیمات اختصاصی ترجمه و حوزه مالی استفاده می‌کند؛ پیام سیستمی عمومی ارسال نمی‌شود.</string>
+    <string name="translate_all_article_titles_description">با باز شدن برنامه، همه عنوان‌های مقاله‌هایی که در حافظه پنهان نیستند در پس‌زمینه ترجمه می‌شوند. عنوان‌های ذخیره‌شده در حافظه پنهان دوباره درخواست نمی‌شوند.</string>
+    <string name="show_translated_feed_titles">نمایش عنوان‌های ترجمه‌شده</string>
+    <string name="show_translated_feed_titles_description">وقتی ترجمه خودکار خاموش است، عنوان‌هایی را که قبلاً ترجمه و در حافظه پنهان ذخیره شده‌اند همچنان نشان بده.</string>
 </resources>

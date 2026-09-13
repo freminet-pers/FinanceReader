@@ -287,4 +287,12 @@
     <string name="open_article_in_reader">Deschideți in cititor</string>
     <string name="widget_title">Feeder</string>
     <string name="openai_settings_info">Compatibil cu mulți furnizori IA, dar nu toți</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Recomandat: deepseek-flash pentru traducerea rapidă și precisă a știrilor financiare. Modelul și endpointul sunt completate în prealabil; introduceți cheia API.</string>
+    <string name="provider_qwen_mt">Traducere Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Recomandat: qwen-mt-flash pentru un echilibru bun între viteză și calitate. Modelul și endpointul sunt completate în prealabil; introduceți cheia API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT folosește automat setări dedicate pentru traducere și domeniul financiar; promptul general de sistem nu este trimis.</string>
+    <string name="translate_all_article_titles_description">La deschiderea aplicației, toate titlurile articolelor care nu sunt în cache sunt traduse în fundal. Titlurile din cache nu sunt solicitate din nou.</string>
+    <string name="show_translated_feed_titles">Afișează titlurile traduse</string>
+    <string name="show_translated_feed_titles_description">Continuă să afișezi titlurile deja traduse și memorate în cache când traducerea automată este dezactivată.</string>
 </resources>

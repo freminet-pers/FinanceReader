@@ -109,6 +109,7 @@ open class OPMLImporter(
             UserSettings.SETTING_SHOW_TITLE_UNREAD_COUNT -> settingsStore.setShowTitleUnreadCount(value.toBoolean())
             UserSettings.SETTING_MAX_ITEM_COUNT_PER_FEED -> settingsStore.setMaxCountPerFeed(value.toIntOrNull() ?: 100)
             UserSettings.SETTING_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT -> settingsStore.setTranslateArticlePreviewsByDefault(value.toBoolean())
+            UserSettings.SETTING_SHOW_TRANSLATED_FEED_TITLES -> settingsStore.setShowTranslatedFeedTitles(value.toBoolean())
             UserSettings.SETTING_TRANSLATE_ARTICLES_BY_DEFAULT -> settingsStore.setTranslateArticlesByDefault(value.toBoolean())
 
             // OpenAI related settings（API Key 属敏感信息，不参与导出/导入）

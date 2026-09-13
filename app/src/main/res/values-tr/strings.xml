@@ -285,4 +285,12 @@
     <string name="summarize_on_open">Açıldığında özetle</string>
     <string name="feed_search_suggestions_header">Öneriler</string>
     <string name="openai_settings_info">Bir çok YZ sağlayıcısı ile uyumlu, fakat hepsi ile değil</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Önerilen: Finans haberlerini hızlı ve doğru çevirmek için deepseek-flash. Model ve uç nokta önceden doldurulmuştur; API anahtarınızı girin.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash çevirisi</string>
+    <string name="provider_qwen_mt_hint">Önerilen: Hız ve kalite arasında iyi bir denge için qwen-mt-flash. Model ve uç nokta önceden doldurulmuştur; API anahtarınızı girin.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT, özel çeviri ayarlarını ve finans alanını otomatik olarak kullanır; genel sistem istemi gönderilmez.</string>
+    <string name="translate_all_article_titles_description">Uygulama açıldığında önbelleğe alınmamış tüm makale başlıklarını arka planda çevirir. Önbelleğe alınmış başlıklar yeniden istenmez.</string>
+    <string name="show_translated_feed_titles">Çevrilmiş başlıkları göster</string>
+    <string name="show_translated_feed_titles_description">Otomatik çeviri kapatıldığında daha önce çevrilmiş ve önbelleğe alınmış başlıkları göstermeye devam et.</string>
 </resources>

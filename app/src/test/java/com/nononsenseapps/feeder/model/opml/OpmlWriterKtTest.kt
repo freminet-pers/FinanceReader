@@ -162,6 +162,7 @@ class OpmlWriterKtTest {
               <feeder:setting key="pref_translation_source_language" value="English"/>
               <feeder:setting key="pref_translation_system_prompt" value="Be precise"/>
               <feeder:setting key="pref_translate_feed_cards_by_default" value="true"/>
+              <feeder:setting key="pref_show_translated_feed_titles" value="true"/>
               <feeder:setting key="pref_translate_articles_by_default" value="true"/>
               <feeder:blocked pattern="foo"/>
               <feeder:blocked pattern="break &quot;xml id &apos;9&apos; &gt; 0 &amp; &lt; 10"/>
@@ -223,6 +224,7 @@ class OpmlWriterKtTest {
                         UserSettings.SETTING_TRANSLATION_API_AZURE_DEPLOYMENT_ID -> "translation-deployment"
                         UserSettings.SETTING_TRANSLATION_API_REQUEST_TIMEOUT_SECONDS -> "90"
                         UserSettings.SETTING_TRANSLATE_ARTICLE_PREVIEWS_BY_DEFAULT -> "true"
+                        UserSettings.SETTING_SHOW_TRANSLATED_FEED_TITLES -> "true"
                         UserSettings.SETTING_TRANSLATE_ARTICLES_BY_DEFAULT -> "true"
                     }
             }

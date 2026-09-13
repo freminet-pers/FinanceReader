@@ -155,4 +155,12 @@
     <string name="new_based_on_this">ഇതിന്റെ അടിസ്ഥാനത്തിൽ പുതിയത്</string>
     <string name="only_available_on_android_n">ആൻഡ്രോയിഡ് %1$s-ലും അതിനുമുകളിലുള്ളവയിലും മാത്രമേ ലഭ്യമാകൂ</string>
     <string name="theme_e_ink">ഇലക്ട്രോണിക് പേപ്പർ</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">ശുപാർശ: സാമ്പത്തിക വാർത്തകൾ വേഗത്തിലും കൃത്യതയിലും വിവർത്തനം ചെയ്യാൻ deepseek-flash. മോഡലും എൻഡ്‌പോയിന്റും മുൻകൂട്ടി പൂരിപ്പിച്ചിട്ടുണ്ട്; നിങ്ങളുടെ API കീ നൽകുക.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash വിവർത്തനം</string>
+    <string name="provider_qwen_mt_hint">ശുപാർശ: വേഗതയും ഗുണമേന്മയും തമ്മിൽ നല്ല സമതുലിതാവസ്ഥയ്ക്കായി qwen-mt-flash. മോഡലും എൻഡ്‌പോയിന്റും മുൻകൂട്ടി പൂരിപ്പിച്ചിട്ടുണ്ട്; നിങ്ങളുടെ API കീ നൽകുക.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT പ്രത്യേക വിവർത്തന ക്രമീകരണങ്ങളും സാമ്പത്തിക ഡൊമെയ്‌നും സ്വമേധയാ ഉപയോഗിക്കുന്നു; പൊതുവായ സിസ്റ്റം പ്രോംപ്റ്റ് അയയ്ക്കില്ല.</string>
+    <string name="translate_all_article_titles_description">ആപ്പ് തുറക്കുമ്പോൾ കാഷെ ചെയ്യാത്ത എല്ലാ ലേഖന ശീർഷകങ്ങളും പശ്ചാത്തലത്തിൽ വിവർത്തനം ചെയ്യുക. കാഷെ ചെയ്ത ശീർഷകങ്ങൾ വീണ്ടും അഭ്യർത്ഥിക്കില്ല.</string>
+    <string name="show_translated_feed_titles">വിവർത്തനം ചെയ്ത ശീർഷകങ്ങൾ കാണിക്കുക</string>
+    <string name="show_translated_feed_titles_description">ഓട്ടോമാറ്റിക് വിവർത്തനം ഓഫാക്കിയാലും ഇതിനകം വിവർത്തനം ചെയ്ത് കാഷെ ചെയ്ത ശീർഷകങ്ങൾ കാണിക്കുന്നത് തുടരുക.</string>
 </resources>

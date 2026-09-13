@@ -41,8 +41,13 @@ class OpenAIClientDefault(
 private fun OpenAISettings.toOpenAIConfig(): OpenAIConfig =
     OpenAIConfig(
         token = key,
-        // 全文/长文翻译生成较慢，socket 读超时下限提到 120s（避免 DeepSeek 等长生成触发超时）
-        timeout = Timeout(socket = timeoutSeconds.coerceIn(120, 600).seconds),
+        // 全文/长文翻译生成较慢：请求和 socket 超时都要覆盖整次生成；连接单独限短。
+        timeout =
+            Timeout(
+                request = timeoutSeconds.coerceIn(120, 600).seconds,
+                connect = OPENAI_CONNECT_TIMEOUT_SECONDS.seconds,
+                socket = timeoutSeconds.coerceIn(120, 600).seconds,
+            ),
         // LogLevel.None：任何情况下都不输出请求头（避免 Authorization 落入日志）
         logging = LoggingConfig(logLevel = LogLevel.None),
         host = toOpenAIHost(withAzureDeploymentId = false),
@@ -67,3 +72,5 @@ private fun OpenAISettings.toOpenAIConfig(): OpenAIConfig =
             }
         },
     )
+
+private const val OPENAI_CONNECT_TIMEOUT_SECONDS = 30

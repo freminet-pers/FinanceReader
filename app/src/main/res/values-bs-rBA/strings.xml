@@ -340,4 +340,12 @@
     <string name="translate_articles_by_default">Prevedi članke po zadanom</string>
     <string name="widget_title">Feeder</string>
     <string name="widget_refreshing">Osvježavanje</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Preporučeno: deepseek-flash za brz i precizan prijevod finansijskih vijesti. Model i krajnja tačka su unaprijed popunjeni; unesite svoj API ključ.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Preporučeno: qwen-mt-flash za dobar balans brzine i kvaliteta. Model i krajnja tačka su unaprijed popunjeni; unesite svoj API ključ.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT automatski koristi namjenske postavke za prevođenje i domenu finansija; opći sistemski upit se ne šalje.</string>
+    <string name="translate_all_article_titles_description">Pri otvaranju aplikacije u pozadini prevedite sve naslove članaka koji nisu keširani. Keširani naslovi se ne traže ponovo.</string>
+    <string name="show_translated_feed_titles">Prikaži prevedene naslove</string>
+    <string name="show_translated_feed_titles_description">Prikaži već prevedene i keširane naslove i kada je automatsko prevođenje isključeno.</string>
 </resources>

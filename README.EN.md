@@ -2,82 +2,98 @@
 
 [中文](README.md) | **English**
 
-A focused reader for U.S. stock-market news: a handful of solid finance feeds come pre-loaded, and English articles translate into clean Chinese or any language in one tap — numbers, tickers, and terminology all come out right.
+An Android RSS reader focused on financial news. It ships with a set of U.S. market feeds and can translate article titles, RSS descriptions, and full text into Chinese or another selected target language using your own AI API.
 
-It's built on top of the open-source reader [Feeder](https://github.com/spacecowboy/Feeder) (GPL-3.0). Feeder is already a clean, local RSS reader; we kept all of that and layered two things on top: finance content and translation.
+This project is based on the open-source [Feeder](https://github.com/spacecowboy/Feeder) reader (GPL-3.0). It keeps Feeder's mature local reading experience and adds finance-focused feeds and translation workflows.
 
----
+Current stable version: <code>v2.23.6</code> (versionCode <code>4058</code>)
 
-## What's supported
+## What changed in this release
 
-**Feed formats**
+- **DeepSeek V4.1 Flash and Qwen-MT Flash are first-class choices**: select a provider in Settings and the model and endpoint are filled in automatically; only your API key is required.
+- **Automatic title translation on app open**: when “Auto-translate all article titles” is enabled, uncached titles in the current feed list are translated sequentially in the background.
+- **Cached titles remain visible**: “Show translated titles” is a separate switch, so titles already translated remain available after automatic translation is turned off.
+- **The list and article page share the same translated title**: opening an article reuses the cached title instead of requesting it again.
+- **RSS descriptions translate on article open**: after you open an article, its title and existing RSS description are translated automatically. Full text remains behind the top “Translate” action so opening a preview does not immediately trigger a large request.
+- **Financial-text safeguards**: the translation flow is tuned to preserve numbers, percentages, dates, currencies, tickers, indices, company names, and HTML structure as far as possible.
+- **Complete locale coverage**: the new provider, automatic translation, and cached-title visibility strings are present in all existing app locales.
 
-- RSS, Atom, and JSON Feed — paste any URL.
-- OPML import / export (export doubles as a backup).
-- Offline reading, unread counts, bookmarks, home-screen widgets, full-text fetching — everything Feeder already had is still there.
+## Recommended providers
 
-**System requirements**
+| Provider | Default model | Default endpoint | Best for |
+| --- | --- | --- | --- |
+| **DeepSeek V4.1 Flash** | <code>deepseek-flash</code> | <code>https://api.deepseek.com</code> | Recommended general choice for a strong speed/quality balance on financial news |
+| **Qwen-MT Flash** | <code>qwen-mt-flash</code> | <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code> | Translation-only workloads that need consistent speed and quality |
 
-- Android 10 (API 29) or newer, arm64 devices.
-- No Google services, no account, everything runs locally.
+### DeepSeek V4.1 Flash optimizations
 
----
+- Uses DeepSeek's Chat Completions route and accepts endpoints entered with or without <code>/v1</code>, without duplicating the path.
+- Disables unnecessary thinking output for V4/V4.1 translation requests, reducing latency and extra output for titles and previews.
+- Uses the preset model and direct request path for the official provider, avoiding an extra model-discovery request.
+- Retries rate limits and transient server failures a limited number of times; if one article still fails, its original text remains available.
 
-## What we actually built
+### Qwen-MT Flash optimizations
 
-1. **Finance content out of the box**: on first launch it auto-subscribes 7 U.S. finance feeds (CNBC, MarketWatch, Seeking Alpha, NPR, FRED), so there's news to read immediately.
+- Uses Qwen-MT's dedicated request format instead of treating the model like a general chat model.
+- Sends <code>translation_options.source_lang</code> and <code>translation_options.target_lang</code> explicitly and sets the finance domain automatically.
+- Sends only the <code>user</code> message accepted by the translation model; the incompatible generic <code>system</code> message is omitted.
+- Works for titles, RSS descriptions, and full-text translation. Qwen-MT is translation-only and is not used for AI article summaries.
 
-2. **AI translation with your own key**: plug in an API key, base URL and model name in Settings — DeepSeek, Kimi, Zhipu, Qwen, anything OpenAI-compatible — hit "Test connection", and you can translate full articles.
+## Translation workflow
 
-3. **Translation tuned for financial news**: the built-in prompt keeps numbers, percentages, dates, currencies, tickers and company names as-is, uses industry-standard terminology ("basis points" → "基点"), and never adds or invents anything.
+1. Open **Settings → AI and translation → Translation API**.
+2. Choose **DeepSeek V4.1 Flash** or **Qwen-MT Flash** and confirm the prefilled model and endpoint.
+3. Enter your API key and choose a target language. Source language can stay on offline auto-detection or be selected manually.
+4. Optionally edit the custom system prompt. Qwen-MT uses dedicated translation parameters and does not send the generic system prompt.
+5. Tap **Test connection**, then save.
+6. Enable **Auto-translate all article titles** to process uncached titles in the background when the app opens. Turn it off to stop new requests, and leave **Show translated titles** enabled if you still want to see cached results.
+7. Open an article to see its cached translated title and automatically translate its RSS description. Use the top **Translate** action when you decide to read the full text.
 
-4. **Offline source-language detection**: fully local (no Google services); recognizes English, Japanese, Korean, simplified/traditional Chinese and more, with a manual override. The target language follows your phone's system language by default.
+Results are cached per article and translation configuration. Changes to the model, endpoint, source language, target language, or prompt create a new cache identity, preventing an old configuration from being shown as a new result. Long content is chunked, requests are serialized, and recoverable errors are retried to balance latency, stability, and API usage.
 
-5. **One-tap full-text translation**: a "Translate" button right at the top of the article translates the whole thing in one tap — no "expand first, then translate" dance. Translated articles reopen already-translated, with no repeat API cost.
+## Included finance feeds
 
-6. **Long articles don't break**: oversized articles are chunked and translated piece by piece, with automatic retry on failure; translation keeps running in the background if you leave the page.
+The first launch subscribes to 12 feeds:
 
-7. **Security done properly**: the API key is encrypted with the system keystore, only HTTPS is used, and the key never leaks into logs or exports.
+CNBC Top News, CNBC Markets, MarketWatch Top Stories, MarketWatch Market Pulse, Yahoo Finance, WSJ Markets, Nasdaq Markets, NYT Economy, Fortune, Seeking Alpha, NPR Business, and FRED Blog.
 
----
+You can add any RSS, Atom, or JSON Feed and import or export subscriptions with OPML.
 
-## Screenshots
+## Main capabilities
 
-| Feed list | Subscriptions |
-|---|---|
-| ![Feed list](screenshots/1-feed-list.png) | ![Subscriptions](screenshots/2-drawer-feeds.png) |
+- RSS, Atom, and JSON Feed parsing
+- Offline reading, background sync, unread counts, bookmarks, and home-screen widgets
+- Full-text fetching, article search, and OPML import/export
+- AI translation, on-device offline translation, and DeepL
+- OpenAI, Azure OpenAI, and other Chat Completions-compatible providers
+- Custom source language, target language, and finance-oriented translation prompts
 
-| Article | Translation settings |
-|---|---|
-| ![Article](screenshots/3-article.png) | ![Settings](screenshots/4-translation-settings.png) |
+## Privacy and API keys
 
-| Settings (source language / prompt / test) | Top translate button |
-|---|---|
-| ![Settings](screenshots/5-translation-settings-2.png) | ![Translate button](screenshots/6-translate-button.png) |
+- No API key is bundled. Translation costs are charged by the provider account you configure.
+- The API key is encrypted with Android Keystore and stored locally; it is not written to logs, OPML exports, or article data.
+- Remote endpoints are required to use HTTPS by default; HTTP is accepted only for explicitly local or LAN addresses.
+- No app account is required. Subscriptions and article data stay on the device by default.
 
----
+## Install and build
 
-## Install
+When an APK is published on GitHub, download the matching version from [Releases](https://github.com/freminet-pers/FinanceReader/releases), or build it yourself:
 
-1. Download `app-fdroid-release.apk` (arm64) from [Releases](../../releases).
-2. Allow "install from unknown sources" and install it.
-3. The app auto-subscribes finance feeds on first launch; set up your API under Settings → AI and translation → Translation API, tap "Test connection", and translate away.
+    ./gradlew :app:assembleFdroidRelease
 
-See [`USER_GUIDE.md`](USER_GUIDE.md) for a detailed guide (Chinese).
+Build requirements are JDK 17+ and Android SDK 36. The minimum supported version is Android 10 (API 29), and the current release target is arm64.
 
-## Build from source
+<code>FdroidRelease</code> is the existing Gradle build-variant name, not the product name. The app is branded **财经速读** and uses applicationId <code>com.financereader.app</code>; the variant keeps the no-Google-services release configuration.
 
-```bash
-# Requires JDK 17+ and Android SDK 36
-./gradlew assembleFdroidRelease
-```
+Before submitting changes, run:
 
-See [`BUILD_GUIDE.md`](BUILD_GUIDE.md) for build, signing and versioning rules.
+    ./gradlew :app:ktlintCheck
+    ./gradlew :app:testFdroidDebugUnitTest
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) for contribution and repository guidance.
 
 ## License
 
-Forked from [Feeder](https://github.com/spacecowboy/Feeder), licensed under **GPL-3.0** (see `LICENSE`).
+This project is a fork and extension of [Feeder](https://github.com/spacecowboy/Feeder), licensed under **GPL-3.0**; see [LICENSE](LICENSE).
 
-## Credits
-
-Thanks to the Feeder authors and community; language detection by [Lingua](https://github.com/pemistahl/lingua) (MIT), AI calls via [openai-kotlin](https://github.com/aallam/openai-kotlin) (MIT).
+Thanks to the Feeder authors and community. Language detection uses [Lingua](https://github.com/pemistahl/lingua), and AI calls use [openai-kotlin](https://github.com/aallam/openai-kotlin).

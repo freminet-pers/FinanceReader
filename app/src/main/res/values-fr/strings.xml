@@ -347,4 +347,12 @@
     <string name="stop_audio">Arrêter l\'audio</string>
     <string name="seek_forward_10_seconds">Avancer de 10 secondes</string>
     <string name="seek_back_10_seconds">Reculer de 10 secondes</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Recommandé : deepseek-flash pour traduire rapidement et précisément les actualités financières. Le modèle et le point de terminaison sont préremplis ; saisissez votre clé API.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Recommandé : qwen-mt-flash pour un bon équilibre entre vitesse et qualité. Le modèle et le point de terminaison sont préremplis ; saisissez votre clé API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT utilise automatiquement des paramètres de traduction dédiés et le domaine financier ; l\'instruction système générale n\'est pas envoyée.</string>
+    <string name="translate_all_article_titles_description">À l\'ouverture de l\'application, tous les titres d\'articles non mis en cache sont traduits en arrière-plan. Les titres déjà en cache ne sont pas redemandés.</string>
+    <string name="show_translated_feed_titles">Afficher les titres traduits</string>
+    <string name="show_translated_feed_titles_description">Continuer à afficher les titres déjà traduits et mis en cache lorsque la traduction automatique est désactivée.</string>
 </resources>

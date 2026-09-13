@@ -190,6 +190,7 @@ class ArticleViewModel(
                 (translationState as? ArticleTranslationState.AlreadyInPreferredLanguage)
                     ?.takeIf { it.isFullText == isFullText }
             val isShowingTranslated = showTranslated && currentTranslation != null
+            val isShowingTranslatedContent = showTranslated && currentTranslation?.hasTranslatedContent == true
             val canRequestTranslation =
                 translationSettings.canUseAsTranslationApi &&
                     preferredTranslationLanguage.isNotBlank() &&
@@ -233,7 +234,7 @@ class ArticleViewModel(
                     (translationState as? ArticleTranslationState.SystemSettingsRequired)
                         ?.message
                         .orEmpty(),
-                articleContent = if (isShowingTranslated) translatedArticleContent else articleContent,
+                articleContent = if (isShowingTranslatedContent) translatedArticleContent else articleContent,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -264,6 +265,11 @@ class ArticleViewModel(
                     translateCurrentArticle()
                 } else if (restoreCachedTranslationIfPresent(article)) {
                     // 已翻译过的文章：再次打开直接显示译文（命中缓存，不再请求）
+                } else if (canTranslateArticles() && !article.link.isNullOrBlank()) {
+                    // 打开文章先翻译标题和 RSS 简介；全文仍由顶部全文按钮控制。
+                    displayFullTextOverride.value = false
+                    showTranslatedContent.value = true
+                    translateCurrentArticle(forceSummary = true)
                 }
             }
         }
@@ -648,6 +654,7 @@ class ArticleViewModel(
                 targetLanguage = targetLanguage,
             )
         ) {
+            displayFullTextOverride.value = false
             showTranslatedContent.value = true
             translateCurrentArticle(preferFullText = false)
             return true
@@ -655,7 +662,10 @@ class ArticleViewModel(
         return false
     }
 
-    private fun translateCurrentArticle(preferFullText: Boolean = false) {
+    private fun translateCurrentArticle(
+        preferFullText: Boolean = false,
+        forceSummary: Boolean = false,
+    ) {
         // 用应用级作用域：离开正文页后仍在后台继续，结果写入缓存，
         // 再次打开时由 restoreCachedTranslationIfPresent 直接显示译文。
         applicationCoroutineScope.launch(Dispatchers.IO) {
@@ -674,7 +684,7 @@ class ArticleViewModel(
                 }
 
                 // 优先翻译全文（避免「先译摘要、抓全文后再译一次」）；全文抓取失败则回退摘要
-                var fullText = isFullText
+                var fullText = if (forceSummary) false else isFullText
                 val html =
                     if (preferFullText) {
                         try {
@@ -685,9 +695,9 @@ class ArticleViewModel(
                             loadArticleHtml(article, fullText = false)
                         }
                     } else {
-                        loadArticleHtml(article, fullText = isFullText)
+                        loadArticleHtml(article, fullText = fullText)
                     }
-                if (html.isBlank()) {
+                if (html.isBlank() && article.title.isBlank()) {
                     toastMaker.makeToast(R.string.translation_content_empty)
                     clearTranslatedContent()
                     return@launch
@@ -714,22 +724,28 @@ class ArticleViewModel(
                         title = article.title,
                         html = html,
                         isFullText = fullText,
+                        markTranslated = fullText,
                     ) ?: throw IllegalStateException("Translation failed")
 
                 translatedArticleContent.value =
-                    HtmlLinearizer(
-                        tooLargeText = application.getString(R.string.failed_to_fetch_full_article_too_large),
-                        openInBrowserText = application.getString(R.string.open_in_web_view),
-                        articleLink = article.link ?: "",
-                    ).linearize(
-                        translation.translatedHtml,
-                        article.feedUrl ?: "",
-                    )
+                    if (translation.translatedHtml.isBlank()) {
+                        LinearArticle(emptyList())
+                    } else {
+                        HtmlLinearizer(
+                            tooLargeText = application.getString(R.string.failed_to_fetch_full_article_too_large),
+                            openInBrowserText = application.getString(R.string.open_in_web_view),
+                            articleLink = article.link ?: "",
+                        ).linearize(
+                            translation.translatedHtml,
+                            article.feedUrl ?: "",
+                        )
+                    }
                 articleTranslationState.value =
                     ArticleTranslationState.Result(
                         translatedTitle = translation.translatedTitle,
                         sourceLanguage = translation.sourceLanguage,
                         isFullText = fullText,
+                        hasTranslatedContent = translation.translatedHtml.isNotBlank(),
                     )
                 // 翻译的是全文时切到全文显示，避免再看一遍英文原文
                 if (fullText) {
@@ -1044,6 +1060,7 @@ sealed interface ArticleTranslationState {
         val translatedTitle: String,
         val sourceLanguage: String,
         val isFullText: Boolean,
+        val hasTranslatedContent: Boolean = true,
     ) : ArticleTranslationState
 }
 

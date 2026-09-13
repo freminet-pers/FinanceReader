@@ -2,4 +2,12 @@
 <resources>
 
     <string name="by_author_on_date">by %1$s, %2$s</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Recommended: deepseek-flash for fast, accurate financial-news translation. The model and endpoint are prefilled; enter your API key.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Recommended: qwen-mt-flash for a good speed/quality balance. The model and endpoint are prefilled; enter your API key.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT uses dedicated translation settings and the finance domain automatically; the general system prompt is not sent.</string>
+    <string name="translate_all_article_titles_description">When the app opens, translate all uncached article titles in the background. Cached titles are not requested again.</string>
+    <string name="show_translated_feed_titles">Show translated titles</string>
+    <string name="show_translated_feed_titles_description">Keep showing titles already translated and cached when automatic translation is turned off.</string>
 </resources>

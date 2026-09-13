@@ -324,4 +324,12 @@
     <string name="enter_azure_deployment_id_before_saving">Voer je Azure deployment id in voor opslaan.</string>
     <string name="enter_azure_api_version_before_saving">Voer je Azure API versie in voor opslaan.</string>
     <string name="widget_refreshing">Vernieuwen</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Aanbevolen: deepseek-flash voor een snelle en nauwkeurige vertaling van financieel nieuws. Het model en eindpunt zijn vooraf ingevuld; voer je API-sleutel in.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash-vertaling</string>
+    <string name="provider_qwen_mt_hint">Aanbevolen: qwen-mt-flash voor een goede balans tussen snelheid en kwaliteit. Het model en eindpunt zijn vooraf ingevuld; voer je API-sleutel in.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT gebruikt automatisch speciale vertaalinstellingen en het financiële domein; de algemene systeemprompt wordt niet verzonden.</string>
+    <string name="translate_all_article_titles_description">Bij het openen van de app worden alle niet-gecachete artikeltitels op de achtergrond vertaald. Titels die al in de cache staan worden niet opnieuw opgevraagd.</string>
+    <string name="show_translated_feed_titles">Vertaalde titels tonen</string>
+    <string name="show_translated_feed_titles_description">Blijf al vertaalde en gecachte titels tonen wanneer automatische vertaling is uitgeschakeld.</string>
 </resources>

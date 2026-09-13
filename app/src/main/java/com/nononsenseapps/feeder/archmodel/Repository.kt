@@ -385,6 +385,10 @@ class Repository(
 
     fun setTranslateArticlePreviewsByDefault(value: Boolean) = settingsStore.setTranslateArticlePreviewsByDefault(value)
 
+    val showTranslatedFeedTitles = settingsStore.showTranslatedFeedTitles
+
+    fun setShowTranslatedFeedTitles(value: Boolean) = settingsStore.setShowTranslatedFeedTitles(value)
+
     val translateArticlesByDefault = settingsStore.translateArticlesByDefault
 
     fun setTranslateArticlesByDefault(value: Boolean) = settingsStore.setTranslateArticlesByDefault(value)
@@ -440,6 +444,8 @@ class Repository(
                 search = it.search,
             )
         }
+
+    fun getAllFeedListItemsForTitleTranslation(): Flow<List<FeedListItem>> = feedItemStore.getAllFeedListItemsForTitleTranslation()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getCurrentWidgetFeedListItems(): Flow<List<FeedListItem>> =

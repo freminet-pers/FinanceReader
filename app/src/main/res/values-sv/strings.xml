@@ -347,4 +347,12 @@
     <string name="set_translation_language_first">Ställ in ett önskat översättningsspråk i AI-inställningarna</string>
     <string name="translate_feed_cards_by_default">Översätt förhandsgranskningar av artiklar</string>
     <string name="translate_articles_by_default">Översätt artiklar som standard</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Rekommenderas: deepseek-flash för snabb och korrekt översättning av finansnyheter. Modellen och slutpunkten är förifyllda; ange din API-nyckel.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash-översättning</string>
+    <string name="provider_qwen_mt_hint">Rekommenderas: qwen-mt-flash för en bra balans mellan hastighet och kvalitet. Modellen och slutpunkten är förifyllda; ange din API-nyckel.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT använder automatiskt särskilda översättningsinställningar och finansdomänen; den allmänna systemprompten skickas inte.</string>
+    <string name="translate_all_article_titles_description">När appen öppnas översätts alla artikelrubriker som inte finns i cachen i bakgrunden. Rubriker som finns i cachen begärs inte igen.</string>
+    <string name="show_translated_feed_titles">Visa översatta rubriker</string>
+    <string name="show_translated_feed_titles_description">Fortsätt visa rubriker som redan har översatts och lagrats i cachen när automatisk översättning är avstängd.</string>
 </resources>

@@ -347,4 +347,12 @@
     <string name="stop_audio">Audio beenden</string>
     <string name="seek_back_10_seconds">10 Sekunden zurückspulen</string>
     <string name="seek_forward_10_seconds">10 Sekunden vorspulen</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Empfohlen: deepseek-flash für schnelle und genaue Übersetzungen von Finanznachrichten. Modell und Endpunkt sind vorausgefüllt; gib deinen API-Schlüssel ein.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Empfohlen: qwen-mt-flash für ein gutes Verhältnis von Geschwindigkeit und Qualität. Modell und Endpunkt sind vorausgefüllt; gib deinen API-Schlüssel ein.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT verwendet automatisch spezielle Übersetzungseinstellungen und die Finanzdomäne; der allgemeine System-Prompt wird nicht gesendet.</string>
+    <string name="translate_all_article_titles_description">Beim Öffnen der App werden alle nicht zwischengespeicherten Artikeltitel im Hintergrund übersetzt. Bereits zwischengespeicherte Titel werden nicht erneut angefragt.</string>
+    <string name="show_translated_feed_titles">Übersetzte Titel anzeigen</string>
+    <string name="show_translated_feed_titles_description">Bereits übersetzte und zwischengespeicherte Titel weiterhin anzeigen, wenn die automatische Übersetzung deaktiviert ist.</string>
 </resources>

@@ -341,4 +341,12 @@
     <string name="device_sync_beta_warning">VAROVÁNÍ! Toto je Beta funkce. Před jejím povolením proveďte export OPML všech vašich kanálů a uložte jej jako zálohu.</string>
     <string name="local_translation_requires_android_12">Místní překlad vyžaduje Android 12 nebo novější.</string>
     <string name="rename_tag">Přejmenovat štítek</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Doporučeno: deepseek-flash pro rychlý a přesný překlad finančních zpráv. Model a koncový bod jsou předvyplněné; zadejte svůj klíč API.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Doporučeno: qwen-mt-flash pro dobrý poměr rychlosti a kvality. Model a koncový bod jsou předvyplněné; zadejte svůj klíč API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT automaticky používá specializované nastavení překladu a finanční doménu; obecná systémová výzva se neodesílá.</string>
+    <string name="translate_all_article_titles_description">Po otevření aplikace na pozadí přeloží všechny titulky článků, které nejsou v mezipaměti. Titulky uložené v mezipaměti se znovu nevyžadují.</string>
+    <string name="show_translated_feed_titles">Zobrazovat přeložené titulky</string>
+    <string name="show_translated_feed_titles_description">Po vypnutí automatického překladu nadále zobrazovat již přeložené titulky uložené v mezipaměti.</string>
 </resources>

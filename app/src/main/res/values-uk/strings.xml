@@ -347,4 +347,12 @@
     <string name="stop_audio">Зупинити аудіо</string>
     <string name="seek_forward_10_seconds">Перемотати вперед на 10 секунд</string>
     <string name="seek_back_10_seconds">Перемотати назад на 10 секунд</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Рекомендовано: deepseek-flash для швидкого й точного перекладу фінансових новин. Модель і кінцеву точку вже заповнено; введіть свій API-ключ.</string>
+    <string name="provider_qwen_mt">Переклад Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Рекомендовано: qwen-mt-flash для хорошого балансу швидкості та якості. Модель і кінцеву точку вже заповнено; введіть свій API-ключ.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT автоматично використовує спеціальні налаштування перекладу та фінансову тематику; загальний системний промпт не надсилається.</string>
+    <string name="translate_all_article_titles_description">Після відкриття застосунку у фоновому режимі перекладаються всі заголовки статей, яких немає в кеші. Заголовки з кешу повторно не запитуються.</string>
+    <string name="show_translated_feed_titles">Показувати перекладені заголовки</string>
+    <string name="show_translated_feed_titles_description">Продовжувати показувати вже перекладені та збережені в кеші заголовки, коли автоматичний переклад вимкнено.</string>
 </resources>

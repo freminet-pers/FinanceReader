@@ -250,4 +250,12 @@
     <string name="feed_item_style_compact_card">Tarxeta compacta</string>
     <string name="touch_to_play_audio">Toca para reproducir o audio</string>
     <string name="show_title_unread_count">Mostrar número de artigos non lidos no título</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Recomendado: deepseek-flash para traducir noticias financeiras de forma rápida e precisa. O modelo e o endpoint xa están cubertos; introduce a túa clave de API.</string>
+    <string name="provider_qwen_mt">Tradución Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Recomendado: qwen-mt-flash para un bo equilibrio entre velocidade e calidade. O modelo e o endpoint xa están cubertos; introduce a túa clave de API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT usa automaticamente axustes de tradución específicos e o dominio financeiro; non se envía o aviso xeral do sistema.</string>
+    <string name="translate_all_article_titles_description">Ao abrir a aplicación, tradúcense en segundo plano todos os títulos de artigos que non estean na caché. Os títulos na caché non se solicitan de novo.</string>
+    <string name="show_translated_feed_titles">Amosar títulos traducidos</string>
+    <string name="show_translated_feed_titles_description">Seguir amosando os títulos xa traducidos e gardados na caché cando a tradución automática estea desactivada.</string>
 </resources>

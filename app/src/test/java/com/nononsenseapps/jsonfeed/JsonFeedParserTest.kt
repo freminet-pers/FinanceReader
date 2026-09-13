@@ -1,5 +1,7 @@
 package com.nononsenseapps.jsonfeed
 
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -90,15 +92,32 @@ class JsonFeedParserTest {
     }
 
     @Test
-    fun cowboyOnline() {
-        val parser = JsonFeedParser()
+    fun cowboyJsonFeedUrl() {
+        MockWebServer().use { server ->
+            server.enqueue(
+                MockResponse()
+                    .addHeader("Content-Type", "application/feed+json")
+                    .setBody(
+                        """
+                        {
+                            "version": "https://jsonfeed.org/version/1",
+                            "title": "Cowboy Programmer",
+                            "author": {
+                                "name": "Space Cowboy"
+                            },
+                            "icon": "https://cowboyprogrammer.org/css/images/logo.png"
+                        }
+                        """.trimIndent(),
+                    ),
+            )
 
-        val feed = parser.parseUrl("https://cowboyprogrammer.org/feed.json")
+            val feed = JsonFeedParser().parseUrl(server.url("/feed.json").toString())
 
-        assertEquals("https://jsonfeed.org/version/1", feed.version)
-        assertEquals("Cowboy Programmer", feed.title)
-        assertEquals("Space Cowboy", feed.author?.name)
-        assertEquals("https://cowboyprogrammer.org/css/images/logo.png", feed.icon)
+            assertEquals("https://jsonfeed.org/version/1", feed.version)
+            assertEquals("Cowboy Programmer", feed.title)
+            assertEquals("Space Cowboy", feed.author?.name)
+            assertEquals("https://cowboyprogrammer.org/css/images/logo.png", feed.icon)
+        }
     }
 
     @Test

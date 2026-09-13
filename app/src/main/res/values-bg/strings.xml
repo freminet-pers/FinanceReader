@@ -296,4 +296,12 @@
     <string name="pref_paging_mode_description">Навигирайте в статиите, като „прелиствате страници“, вместо да превъртате непрекъснато. Оптимизирано за устройства с електронно мастило.</string>
     <string name="pref_animated_paging_title">Анимирано прелистване</string>
     <string name="pref_animated_paging_description">Краткотрайно анимиране на прелистването на страниците. Може да доведе до появата на „дублирани образи“ на някои устройства с E-ink дисплей.</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Препоръчително: deepseek-flash за бърз и точен превод на финансови новини. Моделът и крайната точка са попълнени предварително; въведете своя API ключ.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Препоръчително: qwen-mt-flash за добър баланс между скорост и качество. Моделът и крайната точка са попълнени предварително; въведете своя API ключ.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT използва специални настройки за превод и автоматично задава финансовия домейн; общата системна подкана не се изпраща.</string>
+    <string name="translate_all_article_titles_description">При отваряне на приложението на заден план се превеждат всички заглавия на статии, които не са кеширани. Кешираните заглавия не се заявяват отново.</string>
+    <string name="show_translated_feed_titles">Показване на преведените заглавия</string>
+    <string name="show_translated_feed_titles_description">Продължавайте да виждате вече преведените и кеширани заглавия, когато автоматичният превод е изключен.</string>
 </resources>

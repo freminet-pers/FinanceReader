@@ -62,13 +62,19 @@ import androidx.compose.ui.window.DialogProperties
 import com.aallam.openai.client.OpenAIHost
 import com.nononsenseapps.feeder.R
 import com.nononsenseapps.feeder.archmodel.OpenAISettings
+import com.nononsenseapps.feeder.openai.DEEPSEEK_API_BASE_URL
+import com.nononsenseapps.feeder.openai.DEEPSEEK_DEFAULT_MODEL_ID
 import com.nononsenseapps.feeder.openai.DEFAULT_TRANSLATION_SYSTEM_PROMPT
 import com.nononsenseapps.feeder.openai.LOCAL_TRANSLATION_PROVIDER_URL
+import com.nononsenseapps.feeder.openai.QWEN_MT_API_BASE_URL
+import com.nononsenseapps.feeder.openai.QWEN_MT_DEFAULT_MODEL_ID
 import com.nononsenseapps.feeder.openai.canUseAsTranslationApi
 import com.nononsenseapps.feeder.openai.isBlankConfiguration
 import com.nononsenseapps.feeder.openai.isDeepL
+import com.nononsenseapps.feeder.openai.isDeepSeekV41Model
 import com.nononsenseapps.feeder.openai.isInsecureNonLocalUrl
 import com.nononsenseapps.feeder.openai.isLocalTranslation
+import com.nononsenseapps.feeder.openai.isQwenMtModel
 import com.nononsenseapps.feeder.ui.compose.theme.LocalDimens
 import kotlinx.coroutines.delay
 import java.util.Locale
@@ -330,7 +336,7 @@ private fun OpenAISectionEdit(
     val hasProvider = provider != AIProviderPreset.NONE
     val isTranslationOnlyProvider = provider.isTranslationOnly
     val needsApiKey = provider.needsApiKey
-    val showsTranslationEndpoint = provider == AIProviderPreset.DEEPL
+    val showsTranslationEndpoint = provider == AIProviderPreset.DEEPL || provider == AIProviderPreset.QWEN_MT
 
     LaunchedEffect(current, provider) {
         if (provider != AIProviderPreset.NONE && provider != AIProviderPreset.LOCAL_TRANSLATION) {
@@ -392,6 +398,15 @@ private fun OpenAISectionEdit(
                 onProviderChange(selected)
             },
         )
+
+        provider.hintRes?.let { hintRes ->
+            Text(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                text = stringResource(hintRes),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
 
         if (hasProvider && needsApiKey) {
             TextField(
@@ -547,10 +562,19 @@ private fun OpenAISectionEdit(
                 onTranslationSourceLanguageChange = onTranslationSourceLanguageChange,
             )
 
-            TranslationSystemPromptField(
-                translationSystemPrompt = translationSystemPrompt,
-                onTranslationSystemPromptChange = onTranslationSystemPromptChange,
-            )
+            if (provider == AIProviderPreset.QWEN_MT) {
+                Text(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                    text = stringResource(R.string.provider_qwen_mt_prompt_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else {
+                TranslationSystemPromptField(
+                    translationSystemPrompt = translationSystemPrompt,
+                    onTranslationSystemPromptChange = onTranslationSystemPromptChange,
+                )
+            }
 
             TestConnectionField(
                 connectionTestState = connectionTestState,
@@ -1299,6 +1323,9 @@ private enum class AIProviderPreset(
     val isTranslationOnly: Boolean,
     val needsApiKey: Boolean,
     val endpoint: String,
+    val defaultModelId: String = "",
+    val defaultBaseUrl: String = "",
+    val hintRes: Int? = null,
 ) {
     NONE(
         titleRes = R.string.provider_none,
@@ -1308,6 +1335,30 @@ private enum class AIProviderPreset(
         isTranslationOnly = false,
         needsApiKey = false,
         endpoint = "",
+    ),
+    DEEPSEEK(
+        titleRes = R.string.provider_deepseek,
+        supportsSummary = true,
+        supportsTranslation = true,
+        isDeepL = false,
+        isTranslationOnly = false,
+        needsApiKey = true,
+        endpoint = "$DEEPSEEK_API_BASE_URL/chat/completions",
+        defaultModelId = DEEPSEEK_DEFAULT_MODEL_ID,
+        defaultBaseUrl = DEEPSEEK_API_BASE_URL,
+        hintRes = R.string.provider_deepseek_hint,
+    ),
+    QWEN_MT(
+        titleRes = R.string.provider_qwen_mt,
+        supportsSummary = false,
+        supportsTranslation = true,
+        isDeepL = false,
+        isTranslationOnly = true,
+        needsApiKey = true,
+        endpoint = "$QWEN_MT_API_BASE_URL/chat/completions",
+        defaultModelId = QWEN_MT_DEFAULT_MODEL_ID,
+        defaultBaseUrl = QWEN_MT_API_BASE_URL,
+        hintRes = R.string.provider_qwen_mt_hint,
     ),
     OPENAI_COMPATIBLE(
         titleRes = R.string.provider_openai_compatible,
@@ -1365,6 +1416,16 @@ private enum class AIProviderPreset(
                     azureDeploymentId = "",
                 )
 
+            DEEPSEEK,
+            QWEN_MT,
+            ->
+                settings.copy(
+                    modelId = defaultModelId,
+                    baseUrl = defaultBaseUrl,
+                    azureApiVersion = "",
+                    azureDeploymentId = "",
+                )
+
             AZURE_OPENAI ->
                 settings.copy(
                     baseUrl = inferAzureBaseUrl(settings),
@@ -1400,9 +1461,11 @@ private enum class AIProviderPreset(
         fun fromSettings(settings: OpenAISettings): AIProviderPreset =
             when {
                 settings.isBlankConfiguration -> NONE
-                settings.baseUrl.contains("openai.azure.com", ignoreCase = true) -> AZURE_OPENAI
                 settings.isLocalTranslation -> LOCAL_TRANSLATION
                 settings.isDeepL -> DEEPL
+                settings.isQwenMtModel -> QWEN_MT
+                settings.isDeepSeekPreset() -> DEEPSEEK
+                settings.baseUrl.contains("openai.azure.com", ignoreCase = true) -> AZURE_OPENAI
                 else -> OPENAI_COMPATIBLE
             }
 
@@ -1416,6 +1479,14 @@ private enum class AIProviderPreset(
             }
     }
 }
+
+private fun OpenAISettings.isDeepSeekPreset(): Boolean =
+    isDeepSeekV41Model ||
+        modelId
+            .trim()
+            .lowercase(Locale.ROOT)
+            .startsWith("deepseek-") ||
+        baseUrl.contains("api.deepseek.com", ignoreCase = true)
 
 @Preview("tablet", device = Devices.PIXEL_C)
 @Preview("phone", device = Devices.PIXEL_7)
@@ -1483,7 +1554,10 @@ private fun OpenAISettings.validationMessage(
 
     return when (provider) {
         AIProviderPreset.NONE -> null
-        AIProviderPreset.OPENAI_COMPATIBLE -> {
+        AIProviderPreset.OPENAI_COMPATIBLE,
+        AIProviderPreset.DEEPSEEK,
+        AIProviderPreset.QWEN_MT,
+        -> {
             when {
                 baseUrl.isInsecureNonLocalUrl() -> context.getString(R.string.https_required)
                 modelId.isBlank() -> context.getString(R.string.enter_model_id_before_saving)

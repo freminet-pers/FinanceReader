@@ -251,6 +251,15 @@
     <string name="read_adjective">已讀</string>
     <string name="summarize">概述</string>
     <string name="openai_settings">OpenAI 整合</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">推薦模型：deepseek-flash，速度快、財經翻譯準確。模型和介面地址已自動填寫，只需輸入 API 金鑰。</string>
+    <string name="provider_qwen_mt">通義千問翻譯（Qwen-MT Flash）</string>
+    <string name="provider_qwen_mt_hint">推薦模型：qwen-mt-flash，速度和準確度均衡。模型和介面地址已自動填寫，只需輸入 API 金鑰。</string>
+    <string name="provider_qwen_mt_prompt_hint">千問翻譯模型會自動使用專用翻譯參數和財經領域設定，不發送通用系統提示詞。</string>
+    <string name="translate_feed_cards_by_default">自動翻譯全部文章標題</string>
+    <string name="translate_all_article_titles_description">開啟應用程式後在背景自動翻譯所有未快取的文章標題；已快取的標題不會重複請求。</string>
+    <string name="show_translated_feed_titles">顯示已翻譯標題</string>
+    <string name="show_translated_feed_titles_description">關閉自動翻譯後，仍顯示已翻譯並快取的標題。</string>
     <string name="touch_to_play_audio">點擊播放音訊</string>
     <string name="azure_deployment_id">Azure 部署 ID</string>
     <string name="azure_api_version">Azure API 版本</string>

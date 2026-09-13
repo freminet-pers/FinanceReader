@@ -164,4 +164,12 @@
     <string name="failed_to_import_OPML">Malsukcesis importi OPML</string>
     <string name="nostr_feed_description">Nostr artikoloj de %1$s</string>
     <string name="feed_search_suggestions_header">Sugestoj</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Rekomendita: deepseek-flash por rapida kaj preciza tradukado de financaj novaĵoj. La modelo kaj finpunkto estas antaŭplenigitaj; enigu vian API-ŝlosilon.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Rekomendita: qwen-mt-flash por bona ekvilibro inter rapideco kaj kvalito. La modelo kaj finpunkto estas antaŭplenigitaj; enigu vian API-ŝlosilon.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT aŭtomate uzas dediĉitajn tradukajn agordojn kaj la financan domajnon; la ĝenerala sistema prompto ne estas sendata.</string>
+    <string name="translate_all_article_titles_description">Kiam la aplikaĵo malfermiĝas, ĝi tradukas en la fono ĉiujn nekaŝitajn artikoltitolojn. Kaŝmemoritaj titoloj ne estas petataj denove.</string>
+    <string name="show_translated_feed_titles">Montri tradukitajn titolojn</string>
+    <string name="show_translated_feed_titles_description">Daŭre montri titolojn jam tradukitajn kaj kaŝmemoritajn kiam aŭtomata tradukado estas malŝaltita.</string>
 </resources>

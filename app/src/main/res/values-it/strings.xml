@@ -340,4 +340,12 @@
     <string name="translate_articles_by_default">Traduci gli articoli per impostazione predefinita</string>
     <string name="device_sync_beta_warning">ATTENZIONE! Questa feature è ancora in Beta. Prima di continuare, fai un backup OPML di tutti i tuoi feed.</string>
     <string name="local_translation_requires_android_12">La traduzione locale richiede una versione Android 12 o più recente.</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">Consigliato: deepseek-flash per tradurre le notizie finanziarie in modo rapido e accurato. Il modello e l\'endpoint sono precompilati; inserisci la tua chiave API.</string>
+    <string name="provider_qwen_mt">Traduzione Qwen-MT Flash</string>
+    <string name="provider_qwen_mt_hint">Consigliato: qwen-mt-flash per un buon equilibrio tra velocità e qualità. Il modello e l\'endpoint sono precompilati; inserisci la tua chiave API.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT usa automaticamente impostazioni di traduzione dedicate e il dominio finanziario; il prompt di sistema generico non viene inviato.</string>
+    <string name="translate_all_article_titles_description">All\'apertura dell\'app, traduci in background tutti i titoli degli articoli non memorizzati nella cache. I titoli memorizzati nella cache non vengono richiesti di nuovo.</string>
+    <string name="show_translated_feed_titles">Mostra titoli tradotti</string>
+    <string name="show_translated_feed_titles_description">Continua a mostrare i titoli già tradotti e memorizzati nella cache quando la traduzione automatica è disattivata.</string>
 </resources>

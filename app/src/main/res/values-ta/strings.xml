@@ -338,4 +338,12 @@
     <string name="translate_articles_by_default">கட்டுரைகளை இயல்பாக மொழிபெயர்க்கவும்</string>
     <string name="widget_title">ஊட்டி</string>
     <string name="widget_refreshing">புத்துணர்ச்சி தரும்</string>
+    <string name="provider_deepseek">DeepSeek V4.1 Flash</string>
+    <string name="provider_deepseek_hint">பரிந்துரை: நிதிச் செய்திகளை வேகமாகவும் துல்லியமாகவும் மொழிபெயர்க்க deepseek-flash. மாடலும் endpoint-மும் முன்பே நிரப்பப்பட்டுள்ளன; உங்கள் API விசையை உள்ளிடவும்.</string>
+    <string name="provider_qwen_mt">Qwen-MT Flash மொழிபெயர்ப்பு</string>
+    <string name="provider_qwen_mt_hint">பரிந்துரை: வேகம் மற்றும் தரத்திற்கு நல்ல சமநிலைக்காக qwen-mt-flash. மாடலும் endpoint-மும் முன்பே நிரப்பப்பட்டுள்ளன; உங்கள் API விசையை உள்ளிடவும்.</string>
+    <string name="provider_qwen_mt_prompt_hint">Qwen-MT தானாகவே பிரத்யேக மொழிபெயர்ப்பு அமைப்புகளையும் நிதித் துறையையும் பயன்படுத்துகிறது; பொதுவான system prompt அனுப்பப்படாது.</string>
+    <string name="translate_all_article_titles_description">பயன்பாட்டைத் திறக்கும்போது, cache செய்யப்படாத அனைத்து கட்டுரைத் தலைப்புகளும் பின்னணியில் மொழிபெயர்க்கப்படும். cache செய்யப்பட்ட தலைப்புகள் மீண்டும் கோரப்படாது.</string>
+    <string name="show_translated_feed_titles">மொழிபெயர்க்கப்பட்ட தலைப்புகளைக் காட்டு</string>
+    <string name="show_translated_feed_titles_description">தானியங்கி மொழிபெயர்ப்பு முடக்கப்பட்டிருந்தாலும் ஏற்கனவே மொழிபெயர்க்கப்பட்டு cache செய்யப்பட்ட தலைப்புகளைக் காட்டிக்கொண்டே இரு.</string>
 </resources>
