@@ -1,13 +1,34 @@
 ## What does this change?
 
-<!-- Describe what this PR does and why. -->
+<!-- Describe the user or maintainer problem, the scope of this PR, and why this is the smallest useful change. -->
 
-## Checklist
+## Scope
 
-- [ ] Ran `./gradlew ktlintFormat` and committed the result
-- [ ] If the Room schema changed: added a `MIGRATION_N_N+1` in `AppDatabase.kt`
-- [ ] If the Room schema changed: added a migration test in `app/src/androidTest/.../db/room/`
+- [ ] User-facing app behavior
+- [ ] Documentation or translation
+- [ ] Repository governance / CI / release process
+- [ ] Default feed list (also update `docs/FEEDS.md`)
 
-## Screenshots (if UI change)
+## Verification
 
-<!-- Optional: before/after screenshots or screen recordings. -->
+<!-- List exact commands and outcomes. Say "not run" with a reason when a check is not relevant or unavailable. -->
+
+- [ ] `./gradlew :app:ktlintCheck` (or explain why not applicable)
+- [ ] `./gradlew :app:testFdroidDebugUnitTest` (or explain why not applicable)
+- [ ] `./gradlew :app:assembleFdroidRelease` (or explain why not applicable)
+- [ ] Markdown links and YAML syntax checked when documentation or templates changed
+
+## Safety and attribution
+
+- [ ] No API keys, private feed exports, signed release material, or sensitive article text are included.
+- [ ] GPL-3.0, Feeder, and dependency attribution is preserved where relevant.
+- [ ] If translation behavior changed, it remains user-configured and opt-in.
+
+## Screenshots or recordings (only for UI changes)
+
+<!-- Attach real device captures when they help review. Do not use placeholders or fabricated results. -->
+
+## Follow-up / known risk
+
+<!-- Note release notes, provider cost/privacy implications, unresolved source availability, or maintainer decisions still needed. -->
+

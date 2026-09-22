@@ -1,135 +1,68 @@
-# Contributing to Feeder
+# Contributing to FinanceReader
 
-Thanks for your interest in contributing! Feeder is an open-source RSS/Atom/JSONFeed reader for Android.
-It is available on [F-Droid](https://f-droid.org/en/packages/com.nononsenseapps.feeder/) and
-[Google Play](https://play.google.com/store/apps/details?id=com.nononsenseapps.feeder.play).
+Thanks for helping improve FinanceReader. This repository is a fork and extension of [Feeder](https://github.com/spacecowboy/Feeder), so focused changes, clear attribution, and reproducible checks are especially useful.
 
----
+## Before you start
 
-## Getting started
+- Read the [project scope note](docs/PROJECT_SCOPE.md) to understand what is maintained here and what remains inherited from Feeder.
+- Search existing [issues](https://github.com/freminet-pers/FinanceReader/issues) and pull requests before opening a new one.
+- Never commit API keys, `local.properties`, signed release material, private feed exports, or article content that you do not have permission to redistribute.
+- Keep unrelated upstream churn out of a FinanceReader pull request. Documentation-only changes are welcome when they improve a specific user or maintainer path.
 
-Clone the repository:
+## Local setup
 
-```
-git clone https://github.com/spacecowboy/Feeder.git
-cd Feeder
-```
+Clone this repository and open it in Android Studio, or use the Gradle wrapper from a terminal:
 
-Build and install to a connected Android device:
-
-```
-./gradlew installFdroidDebug
+```bash
+git clone https://github.com/freminet-pers/FinanceReader.git
+cd FinanceReader
+./gradlew :app:assembleFdroidRelease
 ```
 
-No API keys or special local configuration are required to build and run the app.
+The project currently expects JDK 17+ and Android SDK 36. Building does not require an AI provider account or API key. The release variant is `FdroidRelease`; the app applicationId is `com.financereader.app`.
 
----
+## Checks
 
-## Architecture overview
+For Kotlin or resource changes, run the smallest relevant checks locally and report the exact commands and outcome in your pull request:
 
-Feeder uses **MVVM** with a unidirectional data flow. A more detailed breakdown is available in
-[`AGENTS.md`](AGENTS.md), which also serves as the reference for AI coding agents.
-
-The short version:
-
-- **`ui/compose/`** — Jetpack Compose screens and components
-- **`ui/*.kt`** — ViewModels that own coroutine scopes and expose `StateFlow` to the UI
-- **`archmodel/Repository.kt`** — single source of truth for all dynamic data
-- **`archmodel/*Store.kt`** — domain-scoped data access (feeds, items, settings, …)
-- **`db/room/`** — Room database, entities, DAOs
-- **`model/`** — feed parsing, HTML, OPML, notifications
-
-Dependency injection is handled exclusively by **Kodein DI**. Please do not introduce Hilt, Dagger,
-or any other DI framework.
-
----
-
-## Running tests
-
-| Task | Command |
-|---|---|
-| JVM unit tests only | `./gradlew test` |
-| **Full test suite** (JVM + instrumented) | `./gradlew check connectedCheck` |
-
-Instrumented tests (`connectedCheck`) use a Gradle-managed virtual device (`pixel2api30`) that is started automatically. No physical device or manually started emulator is required — just a correctly configured Android SDK.
-
----
-
-## Code style
-
-Feeder uses **ktlint**. Before opening a pull request, format your code:
-
-```
-./gradlew ktlintFormat
+```bash
+./gradlew :app:ktlintCheck
+./gradlew :app:testFdroidDebugUnitTest
+./gradlew :app:assembleFdroidRelease
 ```
 
-To check without modifying:
+If Android SDK or emulator availability prevents a check, say so explicitly rather than implying that it passed. For documentation-only changes, verify Markdown links and YAML syntax and explain which application checks were not needed.
 
-```
-./gradlew ktlintCheck
-```
+## Change boundaries
 
-CI will fail on unformatted code.
+- Keep pull requests focused on one concern and avoid changing business behavior in a documentation or repository-governance PR.
+- Preserve GPL-3.0 notices, Feeder attribution, contributor links, and dependency licenses.
+- If a change alters Room schema, include the migration and migration test required by the inherited Feeder architecture; see [AGENTS.md](AGENTS.md) for the detailed rule.
+- Translation provider changes must keep API keys user-supplied and opt-in. Do not add a bundled key or silently send article text to a new endpoint.
+- Default feed changes should update [docs/FEEDS.md](docs/FEEDS.md) and explain why the source was added, removed, or replaced.
+- User-facing behavior changes should update both [README.md](README.md) and [README.EN.md](README.EN.md) when practical.
 
----
+## Pull requests
 
-## Database schema changes
+Use the repository pull-request template. Include:
 
-> **This is a hard rule — no exceptions.**
+- what changed and why;
+- files or user paths affected;
+- commands run and their results;
+- screenshots or recordings only when they are real and relevant (do not add placeholders);
+- any known risk, provider cost implication, follow-up documentation, or maintainer decision still needed.
 
-If your change modifies the Room database schema (adding/removing/altering tables or columns), you
-**must** also provide:
+Use a short Conventional Commit-style subject when possible, for example:
 
-1. A migration object `MIGRATION_N_N+1` in `app/src/main/java/com/nononsenseapps/feeder/db/room/AppDatabase.kt`,
-   registered in the `Room.databaseBuilder` call.
-2. A migration test in `app/src/androidTest/java/com/nononsenseapps/feeder/db/room/`.
-
-Feeder has users upgrading across many versions. A missing migration causes data loss, which is a
-critical bug.
-
----
-
-## Commit messages
-
-Feeder follows [Conventional Commits](https://www.conventionalcommits.org/) with **past-tense**
-descriptions (they read better in the auto-generated changelog):
-
-```
-<type>: <past-tense description>
+```text
+docs: clarified translation setup and feed replacement
+ci: checked documentation links on pull requests
+fix: preserved cached title translations after restart
 ```
 
-Examples:
+## Reporting problems and suggesting changes
 
-```
-fix: adjusted sync frequency
-feat: added article text size setting
-chore: updated dependency versions
-refactor: extracted feed parsing into separate class
-```
+Use the issue forms with the app version, Android version, device, source of the APK, and reproducible steps. Remove API keys and private article text from logs. A feed-specific report should include the public feed URL only when it is safe to share.
 
-Common types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style`.
+Security-sensitive reports belong in [SECURITY.md](SECURITY.md), not a public issue.
 
----
-
-## Translations
-
-Translations are very welcome! The easiest way to contribute is via
-[Weblate](https://hosted.weblate.org/engage/feeder/). Pull requests with translation files are also
-accepted.
-
----
-
-## Pull request guidelines
-
-- Keep PRs focused — one concern per PR is much easier to review.
-- Include tests for new behaviour where practical.
-- Run `./gradlew ktlintFormat` before pushing.
-- Follow the commit message convention above.
-- If your change touches the database schema, migrations are mandatory (see above).
-
----
-
-## Questions?
-
-Open an issue on GitHub or start a discussion. The project is maintained by one person, so please
-be patient — all genuine contributions are appreciated.

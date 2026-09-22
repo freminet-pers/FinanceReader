@@ -1,4 +1,13 @@
-# Feeder — Agent & Contributor Reference
+# FinanceReader — Agent & Contributor Reference
+
+> This repository is the FinanceReader fork/extension of [Feeder](https://github.com/spacecowboy/Feeder). The architecture notes below are inherited Feeder guidance; read [docs/PROJECT_SCOPE.md](docs/PROJECT_SCOPE.md) first for the current fork boundary.
+
+## FinanceReader overlay
+
+- The current product name is **财经速读 · FinanceReader**; it is not an official Feeder distribution.
+- The current applicationId is `com.financereader.app`, the release variant is `FdroidRelease`, and the current public release is `v2.23.6`. Verify build files and the Release page before repeating version details.
+- FinanceReader-specific work includes the default finance feeds, opt-in user-configured translation, fork branding, release packaging, and repository documentation. Keep [docs/FEEDS.md](docs/FEEDS.md), both README files, and [CONTRIBUTING.md](CONTRIBUTING.md) aligned when these surfaces change.
+- Never add or request real API keys in source, tests, issues, or agent output. Preserve Feeder/GPL-3.0 and dependency attribution.
 
 Feeder is an open-source RSS/Atom/JSONFeed reader for Android, written in Kotlin with Jetpack Compose.
 It runs entirely on-device; no account or backend is required for core functionality.
@@ -81,8 +90,8 @@ To add a new dependency:
 
 | Flavor | App ID | Notes |
 |---|---|---|
-| `fdroid` | `com.nononsenseapps.feeder` | **Primary** — distributed via F-Droid. |
-| `play` | `com.nononsenseapps.feeder.play` | Google Play. Identical code; only a donation-related string differs (Play Store policy). |
+| `fdroid` | `com.financereader.app` | Current no-GMS release configuration; the public `v2.23.6` APK uses this target. |
+| `play` | `com.financereader.app.play` | Optional Play-compatible configuration in the build; do not imply a published store listing unless a current release proves it. |
 
 ---
 
@@ -187,3 +196,4 @@ companion object {
 - Do **not** skip database migrations. See the hard rule above.
 - Do **not** add network calls or remote dependencies to core functionality — Feeder is designed to work fully offline.
 - Do **not** make the Play flavor meaningfully different from the free flavor beyond what already exists.
+
