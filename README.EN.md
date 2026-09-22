@@ -45,7 +45,7 @@ Results are cached per article and translation configuration. Changing the model
 
 ## Included finance feeds
 
-The defaults cover general news, market movement, company/investment media, and macroeconomic data. See [Finance feeds](docs/FEEDS.md) for the selection rationale and replacement instructions. Feeds are provided by third-party publishers and may change URLs, rate-limit clients, remove content, or become unavailable; they are not recommendations or investment advice.
+The defaults cover general news, market movement, company/investment media, and macroeconomic data. See [Finance feeds](docs/FEEDS.EN.md) for the selection rationale and replacement instructions. Feeds are provided by third-party publishers and may change URLs, rate-limit clients, remove content, or become unavailable; they are not recommendations or investment advice.
 
 You can add any RSS, Atom, or JSON Feed and import or export subscriptions with OPML.
 
