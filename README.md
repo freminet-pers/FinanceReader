@@ -1,10 +1,14 @@
 # 财经速读 · FinanceReader
 
+[![最新稳定版](https://img.shields.io/github/v/release/freminet-pers/FinanceReader?display_name=tag&sort=semver)](https://github.com/freminet-pers/FinanceReader/releases/latest)
+[![CI](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml/badge.svg?branch=main)](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml)
+[![许可证：GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+
 [English](README.EN.md) | **中文**
 
-> 面向美股与宏观财经阅读的 Android RSS 应用：打开即读预置财经源，需要时用你自己的 AI API 翻译标题、摘要或全文。
+> 面向美股与宏观财经阅读的 Android RSS 应用：基于 Feeder、本地优先；打开即读预置财经源，需要时用你自己的 AI API（BYOK）翻译标题、摘要或全文。
 
-[下载 v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) · [查看更新记录](CHANGELOG.md) · [查看英文文档](README.EN.md)
+[下载 v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) · [财经源说明](docs/FEEDS.md) · [贡献指南](CONTRIBUTING.md) · [安全说明](SECURITY.md) · [查看更新记录](CHANGELOG.md) · [English](README.EN.md)
 
 FinanceReader 是 [Feeder](https://github.com/spacecowboy/Feeder) 的独立 fork/扩展，遵循 GPL-3.0。它保留 Feeder 的本地 RSS 阅读基础，并把默认内容、财经翻译工作流和发布文档集中到本项目维护。
 
@@ -23,12 +27,10 @@ FinanceReader 是 [Feeder](https://github.com/spacecowboy/Feeder) 的独立 fork
 
 ## 与 Feeder 的关系
 
-| 范围 | FinanceReader 的做法 |
-| --- | --- |
-| 继承 | RSS、Atom、JSON Feed 解析，离线阅读、同步、收藏、搜索、OPML 导入/导出等通用阅读基础来自 Feeder 代码库。 |
-| 独立贡献 | 预置 12 个财经源、财经内容翻译提示与保护规则、标题/摘要/全文翻译工作流、翻译缓存，以及与本项目发布相关的构建和文档。 |
-| 边界 | FinanceReader 不是 Feeder 官方版本；上游的 issue、版本和支持渠道不会自动代表本项目。FinanceReader 的功能问题请在本仓库提交。 |
-| 许可 | 本项目继续遵循 GPL-3.0，并保留 Feeder 与其他依赖的归属信息；详见 [LICENSE](LICENSE) 与[项目范围说明](docs/PROJECT_SCOPE.md)。 |
+- **继承：** RSS、Atom、JSON Feed 解析，离线阅读、同步、收藏、搜索、OPML 导入/导出等通用阅读基础来自 Feeder 代码库。
+- **独立贡献：** 预置 12 个财经源、财经内容翻译提示与保护规则、标题/摘要/全文翻译工作流、翻译缓存，以及与本项目发布相关的构建和文档。
+- **边界：** FinanceReader 不是 Feeder 官方版本；上游的 issue、版本和支持渠道不会自动代表本项目。FinanceReader 的功能问题请在本仓库提交。
+- **许可：** 本项目继续遵循 GPL-3.0，并保留 Feeder 与其他依赖的归属信息；详见 [LICENSE](LICENSE) 与[项目范围说明](docs/PROJECT_SCOPE.md)。
 
 ## 第一次使用：从订阅到翻译
 
@@ -78,6 +80,7 @@ FinanceReader 是 [Feeder](https://github.com/spacecowboy/Feeder) 的独立 fork
 
 ## 文档与协作
 
+- [文档索引](docs/README.md)：按语言进入财经源、项目范围和发布维护说明。
 - [贡献指南](CONTRIBUTING.md)：本项目的开发、测试、文档和翻译协作方式。
 - [安全报告](SECURITY.md)：API Key 处理和安全问题报告边界。
 - [财经源说明](docs/FEEDS.md)：默认 12 个源的覆盖面、URL 和替换方法。
@@ -89,4 +92,3 @@ FinanceReader 是 [Feeder](https://github.com/spacecowboy/Feeder) 的独立 fork
 FinanceReader 基于 [Feeder](https://github.com/spacecowboy/Feeder) 二次开发，遵循 [GNU GPL-3.0](LICENSE)。语言识别使用 [Lingua](https://github.com/pemistahl/lingua)，AI 调用使用 [openai-kotlin](https://github.com/aallam/openai-kotlin)；其他依赖的许可证以各自项目和源码中的声明为准。
 
 财经内容、RSS/Atom/JSON Feed 地址及文章版权归相应出版方所有。FinanceReader 只提供本地聚合和可选翻译工具，不代表或再发布这些出版方。
-

@@ -14,20 +14,20 @@ FinanceReader 在首次启动时添加以下 12 个财经 RSS 源。列表不是
 
 ## 当前默认地址
 
-| 名称 | 覆盖面 | RSS 地址 |
-| --- | --- | --- |
-| CNBC Top News | 综合财经新闻 | <https://www.cnbc.com/id/100003114/device/rss/rss.html> |
-| CNBC Markets | 市场新闻 | <https://www.cnbc.com/id/10000664/device/rss/rss.html> |
-| MarketWatch Top Stories | 综合市场新闻 | <https://feeds.content.dowjones.io/public/rss/mw_topstories> |
-| MarketWatch Market Pulse | 市场动态 | <https://feeds.content.dowjones.io/public/rss/mw_marketpulse> |
-| Yahoo Finance | 财经新闻 | <https://finance.yahoo.com/news/rssindex> |
-| WSJ Markets | 市场新闻 | <https://feeds.a.dj.com/rss/RSSMarketsMain.xml> |
-| Nasdaq Markets | 市场新闻 | <https://www.nasdaq.com/feed/rssoutbound?category=Markets> |
-| NYT Economy | 经济新闻 | <https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml> |
-| Fortune | 企业与商业 | <https://fortune.com/feed/> |
-| Seeking Alpha | 投资市场媒体 | <https://seekingalpha.com/feed.xml> |
-| NPR Business | 商业与经济 | <https://feeds.npr.org/1006/rss.xml> |
-| FRED Blog | 宏观数据与解释 | <https://fredblog.stlouisfed.org/feed/> |
+下面按“名称 — 覆盖面 — 地址”逐条列出，避免在手机上横向滚动宽表格：
+
+- **CNBC Top News** — 综合财经新闻 — <https://www.cnbc.com/id/100003114/device/rss/rss.html>
+- **CNBC Markets** — 市场新闻 — <https://www.cnbc.com/id/10000664/device/rss/rss.html>
+- **MarketWatch Top Stories** — 综合市场新闻 — <https://feeds.content.dowjones.io/public/rss/mw_topstories>
+- **MarketWatch Market Pulse** — 市场动态 — <https://feeds.content.dowjones.io/public/rss/mw_marketpulse>
+- **Yahoo Finance** — 财经新闻 — <https://finance.yahoo.com/news/rssindex>
+- **WSJ Markets** — 市场新闻 — <https://feeds.a.dj.com/rss/RSSMarketsMain.xml>
+- **Nasdaq Markets** — 市场新闻 — <https://www.nasdaq.com/feed/rssoutbound?category=Markets>
+- **NYT Economy** — 经济新闻 — <https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml>
+- **Fortune** — 企业与商业 — <https://fortune.com/feed/>
+- **Seeking Alpha** — 投资市场媒体 — <https://seekingalpha.com/feed.xml>
+- **NPR Business** — 商业与经济 — <https://feeds.npr.org/1006/rss.xml>
+- **FRED Blog** — 宏观数据与解释 — <https://fredblog.stlouisfed.org/feed/>
 
 这些地址与应用当前默认配置保持一致；如果出版方调整地址，应用后续版本可能更新默认值，但已添加到设备的订阅不会自动变成另一个源。
 
@@ -40,4 +40,3 @@ FinanceReader 在首次启动时添加以下 12 个财经 RSS 源。列表不是
 3. 某个源出错时，先在浏览器打开上面的地址确认出版方是否仍提供 Feed；如果已停用，移除它并添加出版方公布的新地址。
 
 Feed 的文章版权和使用条款归出版方所有。FinanceReader 只保存并展示用户订阅的 Feed 内容，并在用户主动启用时将选定文本发送给其配置的翻译服务。
-

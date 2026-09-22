@@ -1,10 +1,14 @@
-# 财经速读 · FinanceReader
+# FinanceReader · 财经速读
+
+[![Latest stable release](https://img.shields.io/github/v/release/freminet-pers/FinanceReader?display_name=tag&sort=semver)](https://github.com/freminet-pers/FinanceReader/releases/latest)
+[![CI](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml/badge.svg?branch=main)](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 [中文](README.md) | **English**
 
-> An Android RSS app for U.S. equity and macro news: read a curated set of finance feeds on first launch, then use your own AI API to translate titles, descriptions, or full text when needed.
+> A local-first Android RSS reader for U.S. equity and macro news, based on Feeder: start with built-in finance feeds, then use your own AI API (BYOK) to translate titles, descriptions, or full text on demand.
 
-[Download v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) · [View the changelog](CHANGELOG.md) · [阅读中文文档](README.md)
+[Download v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) · [Finance feeds](docs/FEEDS.EN.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [View the changelog](CHANGELOG.md) · [中文](README.md)
 
 FinanceReader is an independent fork and extension of [Feeder](https://github.com/spacecowboy/Feeder), licensed under GPL-3.0. It keeps Feeder's local RSS reading foundation while maintaining finance-focused defaults, translation workflows, and release documentation in this repository.
 
@@ -23,12 +27,10 @@ FinanceReader is an independent fork and extension of [Feeder](https://github.co
 
 ## Compared with Feeder
 
-| Scope | FinanceReader's position |
-| --- | --- |
-| Inherited foundation | RSS, Atom, and JSON Feed parsing plus the general offline reader, sync, bookmarks, search, and OPML workflows come from the Feeder codebase. |
-| Independent contribution | Twelve finance defaults, finance-oriented translation safeguards, title/description/full-text translation workflow, translation caching, and fork-specific build/release documentation. |
-| Boundary | FinanceReader is not an official Feeder build. Upstream issues, versions, and support channels do not automatically represent this project; file FinanceReader issues here. |
-| License | The project remains GPL-3.0 and keeps Feeder and dependency attribution. See [LICENSE](LICENSE) and the [project scope note](docs/PROJECT_SCOPE.md). |
+- **Inherited foundation:** RSS, Atom, and JSON Feed parsing plus the general offline reader, sync, bookmarks, search, and OPML workflows come from the Feeder codebase.
+- **Independent contribution:** Twelve finance defaults, finance-oriented translation safeguards, title/description/full-text translation workflow, translation caching, and fork-specific build/release documentation.
+- **Boundary:** FinanceReader is not an official Feeder build. Upstream issues, versions, and support channels do not automatically represent this project; file FinanceReader issues here.
+- **License:** The project remains GPL-3.0 and keeps Feeder and dependency attribution. See [LICENSE](LICENSE) and the [project scope note](docs/PROJECT_SCOPE.md).
 
 ## First-use workflow: from feeds to translation
 
@@ -78,9 +80,10 @@ Before submitting changes, run the lightweight checks:
 
 ## Documentation and collaboration
 
+- [Documentation index](docs/README.md): language-aware entry points for feeds, scope, and release maintenance.
 - [Contributing](CONTRIBUTING.md): project-specific development, testing, documentation, and translation guidance.
 - [Security](SECURITY.md): API-key handling and vulnerability-reporting boundaries.
-- [Finance feeds](docs/FEEDS.md): coverage, URLs, and replacement guidance for the twelve defaults.
+- [Finance feeds](docs/FEEDS.EN.md): coverage, URLs, and replacement guidance for the twelve defaults.
 - [Project scope](docs/PROJECT_SCOPE.md): the maintenance boundary, attribution, and changelog convention for this fork.
 - [CHANGELOG](CHANGELOG.md): FinanceReader release notes plus retained Feeder upstream history; the file begins with a provenance note.
 
@@ -89,4 +92,3 @@ Before submitting changes, run the lightweight checks:
 FinanceReader is based on [Feeder](https://github.com/spacecowboy/Feeder) and released under the [GNU GPL-3.0](LICENSE). Language detection uses [Lingua](https://github.com/pemistahl/lingua), and AI calls use [openai-kotlin](https://github.com/aallam/openai-kotlin); other dependency licenses are defined by their respective projects and source declarations.
 
 Finance articles, feed URLs, and article copyrights belong to their respective publishers. FinanceReader provides a local aggregation and optional translation tool; it does not represent or republish those publishers.
-
