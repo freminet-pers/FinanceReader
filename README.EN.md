@@ -1,99 +1,94 @@
-# 财经速读 · Finance Reader
+# FinanceReader · 财经速读
+
+[![Latest stable release](https://img.shields.io/github/v/release/freminet-pers/FinanceReader?display_name=tag&sort=semver)](https://github.com/freminet-pers/FinanceReader/releases/latest)
+[![CI](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml/badge.svg?branch=main)](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 [中文](README.md) | **English**
 
-An Android RSS reader focused on financial news. It ships with a set of U.S. market feeds and can translate article titles, RSS descriptions, and full text into Chinese or another selected target language using your own AI API.
+> A local-first Android RSS reader for U.S. equity and macro news, based on Feeder: start with built-in finance feeds, then use your own AI API (BYOK) to translate titles, descriptions, or full text on demand.
 
-This project is based on the open-source [Feeder](https://github.com/spacecowboy/Feeder) reader (GPL-3.0). It keeps Feeder's mature local reading experience and adds finance-focused feeds and translation workflows.
+[Download v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) · [Finance feeds](docs/FEEDS.EN.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [View the changelog](CHANGELOG.md) · [中文](README.md)
 
-Current stable version: <code>v2.23.6</code> (versionCode <code>4058</code>)
+FinanceReader is an independent fork and extension of [Feeder](https://github.com/spacecowboy/Feeder), licensed under GPL-3.0. It keeps Feeder's local RSS reading foundation while maintaining finance-focused defaults, translation workflows, and release documentation in this repository.
 
-## What changed in this release
+## Project status
 
-- **DeepSeek V4.1 Flash and Qwen-MT Flash are first-class choices**: select a provider in Settings and the model and endpoint are filled in automatically; only your API key is required.
-- **Automatic title translation on app open**: when “Auto-translate all article titles” is enabled, uncached titles in the current feed list are translated sequentially in the background.
-- **Cached titles remain visible**: “Show translated titles” is a separate switch, so titles already translated remain available after automatic translation is turned off.
-- **The list and article page share the same translated title**: opening an article reuses the cached title instead of requesting it again.
-- **RSS descriptions translate on article open**: after you open an article, its title and existing RSS description are translated automatically. Full text remains behind the top “Translate” action so opening a preview does not immediately trigger a large request.
-- **Financial-text safeguards**: the translation flow is tuned to preserve numbers, percentages, dates, currencies, tickers, indices, company names, and HTML structure as far as possible.
-- **Complete locale coverage**: the new provider, automatic translation, and cached-title visibility strings are present in all existing app locales.
+- Current public stable release: `v2.23.6` (versionCode `4058`); the Release page provides an installable arm64 APK.
+- Minimum Android version: Android 10 (API 29). See [Install and build](#install-and-build) for the build variant and package name.
+- This is a personal/small-maintainer open-source fork. There is no promised release cadence, and it is not an official Feeder distribution.
+- The repository currently has no verifiable device screenshots, so the front page documents the real workflow in text. Real device captures are welcome; placeholder images will not be presented as product evidence.
 
-## Recommended providers
+## Who it is for / who it is not for
 
-| Provider | Default model | Default endpoint | Best for |
-| --- | --- | --- | --- |
-| **DeepSeek V4.1 Flash** | <code>deepseek-flash</code> | <code>https://api.deepseek.com</code> | Recommended general choice for a strong speed/quality balance on financial news |
-| **Qwen-MT Flash** | <code>qwen-mt-flash</code> | <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code> | Translation-only workloads that need consistent speed and quality |
+**Good fit:** people who want to collect finance RSS feeds on Android, keep reading data locally, and use their own translation service when language is a barrier.
 
-### DeepSeek V4.1 Flash optimizations
+**Not a good fit:** people looking for investment advice or a trading terminal; people unwilling to configure an API key or pay a provider; people who need every feed to remain permanently available, full text to always be free, or official Feeder support.
 
-- Uses DeepSeek's Chat Completions route and accepts endpoints entered with or without <code>/v1</code>, without duplicating the path.
-- Disables unnecessary thinking output for V4/V4.1 translation requests, reducing latency and extra output for titles and previews.
-- Uses the preset model and direct request path for the official provider, avoiding an extra model-discovery request.
-- Retries rate limits and transient server failures a limited number of times; if one article still fails, its original text remains available.
+## Compared with Feeder
 
-### Qwen-MT Flash optimizations
+- **Inherited foundation:** RSS, Atom, and JSON Feed parsing plus the general offline reader, sync, bookmarks, search, and OPML workflows come from the Feeder codebase.
+- **Independent contribution:** Twelve finance defaults, finance-oriented translation safeguards, title/description/full-text translation workflow, translation caching, and fork-specific build/release documentation.
+- **Boundary:** FinanceReader is not an official Feeder build. Upstream issues, versions, and support channels do not automatically represent this project; file FinanceReader issues here.
+- **License:** The project remains GPL-3.0 and keeps Feeder and dependency attribution. See [LICENSE](LICENSE) and the [project scope note](docs/PROJECT_SCOPE.md).
 
-- Uses Qwen-MT's dedicated request format instead of treating the model like a general chat model.
-- Sends <code>translation_options.source_lang</code> and <code>translation_options.target_lang</code> explicitly and sets the finance domain automatically.
-- Sends only the <code>user</code> message accepted by the translation model; the incompatible generic <code>system</code> message is omitted.
-- Works for titles, RSS descriptions, and full-text translation. Qwen-MT is translation-only and is not used for AI article summaries.
+## First-use workflow: from feeds to translation
 
-## Translation workflow
+1. Install the [v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6); first launch adds a set of finance RSS feeds.
+2. Start by reading original titles and RSS descriptions. You can remove or add feeds in Settings, or import your own OPML file.
+3. Open **Settings → AI and translation → Translation API**. Choose a preset or enter a Chat Completions-compatible provider, endpoint, and model.
+4. Enter **your own** API key, choose a target language, tap **Test connection**, and save. This project does not provide API keys.
+5. Optionally enable **Auto-translate all article titles**. Uncached titles are processed sequentially in the background; after turning it off, cached translations can remain visible through **Show translated titles**.
+6. Opening an article reuses a cached title and translates the RSS description. Use the top **Translate full text** action when you decide to read the article, so a preview does not automatically create a large request.
 
-1. Open **Settings → AI and translation → Translation API**.
-2. Choose **DeepSeek V4.1 Flash** or **Qwen-MT Flash** and confirm the prefilled model and endpoint.
-3. Enter your API key and choose a target language. Source language can stay on offline auto-detection or be selected manually.
-4. Optionally edit the custom system prompt. Qwen-MT uses dedicated translation parameters and does not send the generic system prompt.
-5. Tap **Test connection**, then save.
-6. Enable **Auto-translate all article titles** to process uncached titles in the background when the app opens. Turn it off to stop new requests, and leave **Show translated titles** enabled if you still want to see cached results.
-7. Open an article to see its cached translated title and automatically translate its RSS description. Use the top **Translate** action when you decide to read the full text.
-
-Results are cached per article and translation configuration. Changes to the model, endpoint, source language, target language, or prompt create a new cache identity, preventing an old configuration from being shown as a new result. Long content is chunked, requests are serialized, and recoverable errors are retried to balance latency, stability, and API usage.
+Results are cached per article and translation configuration. Changing the model, endpoint, source language, target language, or prompt creates a new cache identity; long text is chunked, requests are serialized, and transient failures may be retried. Caching can reduce duplicate requests, but it does not guarantee zero cost or a fixed translation quality.
 
 ## Included finance feeds
 
-The first launch subscribes to 12 feeds:
-
-CNBC Top News, CNBC Markets, MarketWatch Top Stories, MarketWatch Market Pulse, Yahoo Finance, WSJ Markets, Nasdaq Markets, NYT Economy, Fortune, Seeking Alpha, NPR Business, and FRED Blog.
+The defaults cover general news, market movement, company/investment media, and macroeconomic data. See [Finance feeds](docs/FEEDS.EN.md) for the selection rationale and replacement instructions. Feeds are provided by third-party publishers and may change URLs, rate-limit clients, remove content, or become unavailable; they are not recommendations or investment advice.
 
 You can add any RSS, Atom, or JSON Feed and import or export subscriptions with OPML.
 
-## Main capabilities
+## Translation, cost, and privacy boundaries
 
-- RSS, Atom, and JSON Feed parsing
-- Offline reading, background sync, unread counts, bookmarks, and home-screen widgets
-- Full-text fetching, article search, and OPML import/export
-- AI translation, on-device offline translation, and DeepL
-- OpenAI, Azure OpenAI, and other Chat Completions-compatible providers
-- Custom source language, target language, and finance-oriented translation prompts
-
-## Privacy and API keys
-
-- No API key is bundled. Translation costs are charged by the provider account you configure.
-- The API key is encrypted with Android Keystore and stored locally; it is not written to logs, OPML exports, or article data.
-- Remote endpoints are required to use HTTPS by default; HTTP is accepted only for explicitly local or LAN addresses.
-- No app account is required. Subscriptions and article data stay on the device by default.
+- No API key is bundled. DeepSeek and Qwen-MT presets are convenience configurations, not a provider endorsement; other compatible services, DeepL, and on-device offline translation can also be used. Provider choice does not change this project's GPL license.
+- Translation price, quotas, retention, and availability are controlled by the provider account you configure. Automatic title translation can generate multiple requests; test with a small set of articles and review the provider's billing and privacy terms.
+- API keys are encrypted with Android Keystore and stored locally; they are not written to logs, OPML exports, or article data. Never paste a key into an issue, log, screenshot, or pull request.
+- When remote translation is enabled, the selected article text and request parameters are sent to the configured provider. Check that provider's policy before sending sensitive content. Remote endpoints require HTTPS by default; HTTP is accepted only for explicitly local or LAN addresses.
+- Subscriptions, articles, and reading state stay on the device by default, and no app account is required. RSS content remains the responsibility of its publisher; the app does not guarantee its accuracy, completeness, or availability.
 
 ## Install and build
 
-Stable APK: [Finance Reader v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6). You can also build it yourself:
+### Install the release APK
 
-    ./gradlew :app:assembleFdroidRelease
+Download the APK from [FinanceReader v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6). The current Release targets arm64 and Android 10 (API 29) or newer. APKs from different sources may use different signing keys, so verify the source before upgrading.
 
-Build requirements are JDK 17+ and Android SDK 36. The minimum supported version is Android 10 (API 29), and the current release target is arm64.
+### Build from source
 
-<code>FdroidRelease</code> is the existing Gradle build-variant name, not the product name. The app is branded **财经速读** and uses applicationId <code>com.financereader.app</code>; the variant keeps the no-Google-services release configuration.
+Build requirements are JDK 17+ and Android SDK 36; no API key is needed to build. `FdroidRelease` is the existing release variant name, not the product name. The app is branded “财经速读” and uses applicationId `com.financereader.app`.
 
-Before submitting changes, run:
+```bash
+./gradlew :app:assembleFdroidRelease
+```
 
-    ./gradlew :app:ktlintCheck
-    ./gradlew :app:testFdroidDebugUnitTest
+Before submitting changes, run the lightweight checks:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) for contribution and repository guidance.
+```bash
+./gradlew :app:ktlintCheck
+./gradlew :app:testFdroidDebugUnitTest
+```
 
-## License
+## Documentation and collaboration
 
-This project is a fork and extension of [Feeder](https://github.com/spacecowboy/Feeder), licensed under **GPL-3.0**; see [LICENSE](LICENSE).
+- [Documentation index](docs/README.md): language-aware entry points for feeds, scope, and release maintenance.
+- [Contributing](CONTRIBUTING.md): project-specific development, testing, documentation, and translation guidance.
+- [Security](SECURITY.md): API-key handling and vulnerability-reporting boundaries.
+- [Finance feeds](docs/FEEDS.EN.md): coverage, URLs, and replacement guidance for the twelve defaults.
+- [Project scope](docs/PROJECT_SCOPE.md): the maintenance boundary, attribution, and changelog convention for this fork.
+- [CHANGELOG](CHANGELOG.md): FinanceReader release notes plus retained Feeder upstream history; the file begins with a provenance note.
 
-Thanks to the Feeder authors and community. Language detection uses [Lingua](https://github.com/pemistahl/lingua), and AI calls use [openai-kotlin](https://github.com/aallam/openai-kotlin).
+## License and third-party attribution
+
+FinanceReader is based on [Feeder](https://github.com/spacecowboy/Feeder) and released under the [GNU GPL-3.0](LICENSE). Language detection uses [Lingua](https://github.com/pemistahl/lingua), and AI calls use [openai-kotlin](https://github.com/aallam/openai-kotlin); other dependency licenses are defined by their respective projects and source declarations.
+
+Finance articles, feed URLs, and article copyrights belong to their respective publishers. FinanceReader provides a local aggregation and optional translation tool; it does not represent or republish those publishers.

@@ -1,6 +1,10 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
-  - name: Help & Support
-    url: https://matrix.to/#/#feeder-support:matrix.org
-    about: Reduce developer's support workload by asking other users on the Matrix server.
+  - name: Read the project documentation
+    url: https://github.com/freminet-pers/FinanceReader#readme
+    about: Check setup, translation costs, privacy boundaries, and feed replacement guidance first.
+  - name: Security report
+    url: https://github.com/freminet-pers/FinanceReader/security/advisories/new
+    about: Do not disclose credentials or exploitable details in a public issue.
+
 

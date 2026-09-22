@@ -1,99 +1,94 @@
-# 财经速读 · Finance Reader
+# 财经速读 · FinanceReader
+
+[![最新稳定版](https://img.shields.io/github/v/release/freminet-pers/FinanceReader?display_name=tag&sort=semver)](https://github.com/freminet-pers/FinanceReader/releases/latest)
+[![CI](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml/badge.svg?branch=main)](https://github.com/freminet-pers/FinanceReader/actions/workflows/ci_build.yml)
+[![许可证：GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 [English](README.EN.md) | **中文**
 
-一个面向财经新闻的 Android RSS 阅读器。首次打开即可看到预置的美股财经资讯，也可以使用自己的 AI API 将标题、RSS 简介和全文翻译成中文或其他目标语言。
+> 面向美股与宏观财经阅读的 Android RSS 应用：基于 Feeder、本地优先；打开即读预置财经源，需要时用你自己的 AI API（BYOK）翻译标题、摘要或全文。
 
-本项目基于开源阅读器 [Feeder](https://github.com/spacecowboy/Feeder)（GPL-3.0）开发，保留了它成熟的 RSS 阅读能力，并针对财经内容和翻译体验做了专门优化。
+[下载 v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) · [财经源说明](docs/FEEDS.md) · [贡献指南](CONTRIBUTING.md) · [安全说明](SECURITY.md) · [查看更新记录](CHANGELOG.md) · [English](README.EN.md)
 
-当前稳定版本：<code>v2.23.6</code>（versionCode <code>4058</code>）
+FinanceReader 是 [Feeder](https://github.com/spacecowboy/Feeder) 的独立 fork/扩展，遵循 GPL-3.0。它保留 Feeder 的本地 RSS 阅读基础，并把默认内容、财经翻译工作流和发布文档集中到本项目维护。
 
-## 这一版重点优化
+## 项目状态
 
-- **DeepSeek V4.1 Flash 和 Qwen-MT Flash 直接可选**：在设置中选择服务商，模型和接口地址会自动填入，只需填写自己的 API Key。
-- **打开应用后自动翻译文章标题**：开启“自动翻译所有文章标题”后，当前列表中尚未缓存的标题会在后台依次翻译，不阻塞阅读。
-- **已翻译标题不会消失**：单独的“显示已翻译标题”开关控制缓存结果是否继续显示。关闭自动翻译后，之前已经翻译好的标题仍可保留在列表中。
-- **列表与详情页使用同一份标题译文**：点进文章后，详情页标题直接复用列表中的翻译结果，不再重复请求。
-- **打开文章自动翻译 RSS 简介**：用户点开感兴趣的文章后，标题和 RSS 中已有的简介会自动翻译；全文仍由顶部的“翻译全文”按钮控制，避免一打开文章就产生过大的请求。
-- **财经内容专用保护规则**：尽量保留数字、百分比、日期、货币、股票代码、指数和公司名称，并保留正文 HTML 结构。
-- **多语言资源同步**：本次新增的服务商、自动翻译和缓存显示选项已同步到项目现有的全部语言资源。
+- 当前公开稳定版本：`v2.23.6`（versionCode `4058`）；Release 页面提供可直接安装的 arm64 APK。
+- Android 最低版本：Android 10（API 29）。构建变体和包名见[安装与构建](#安装与构建)。
+- 这是一个个人/小规模维护的开源 fork；不承诺固定发布周期，也不是 Feeder 官方发行版。
+- 仓库目前没有可核验的设备截图，因此首页用真实操作流程说明使用结果；欢迎提交真实设备截图，但不会用占位图冒充产品效果。
 
-## 推荐翻译服务
+## 适合谁 / 不适合谁
 
-| 服务商 | 默认模型 | 默认接口 | 适合场景 |
-| --- | --- | --- | --- |
-| **DeepSeek V4.1 Flash** | <code>deepseek-flash</code> | <code>https://api.deepseek.com</code> | 推荐作为通用默认选择，兼顾速度和财经新闻翻译质量 |
-| **Qwen-MT Flash** | <code>qwen-mt-flash</code> | <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code> | 翻译专用模型，适合希望获得稳定速度与质量平衡的场景 |
+**适合：** 想在手机上集中阅读财经 RSS、保留本地阅读数据，并在需要时用自己的翻译服务降低语言门槛的人。
 
-### DeepSeek V4.1 Flash 做了什么优化
+**不适合：** 需要投资建议或行情交易终端的人；不愿自行配置 API Key 或承担服务商费用的人；要求所有财经源永久可用、全文始终免费，或希望获得 Feeder 官方支持的人。
 
-- 使用 DeepSeek 官方 Chat Completions 通道，并兼容用户填写的 <code>/v1</code> 地址，避免重复拼接路径。
-- 对 V4/V4.1 模型关闭不必要的 thinking 输出，减少标题和简介翻译的等待时间与额外输出。
-- 对官方服务商使用预设模型和直接请求路径，不依赖额外的模型列表发现请求。
-- 对限流和临时服务端错误进行有限次数重试，失败时保留原文，不让单篇文章影响整个列表。
+## 与 Feeder 的关系
 
-### Qwen-MT Flash 做了什么优化
+- **继承：** RSS、Atom、JSON Feed 解析，离线阅读、同步、收藏、搜索、OPML 导入/导出等通用阅读基础来自 Feeder 代码库。
+- **独立贡献：** 预置 12 个财经源、财经内容翻译提示与保护规则、标题/摘要/全文翻译工作流、翻译缓存，以及与本项目发布相关的构建和文档。
+- **边界：** FinanceReader 不是 Feeder 官方版本；上游的 issue、版本和支持渠道不会自动代表本项目。FinanceReader 的功能问题请在本仓库提交。
+- **许可：** 本项目继续遵循 GPL-3.0，并保留 Feeder 与其他依赖的归属信息；详见 [LICENSE](LICENSE) 与[项目范围说明](docs/PROJECT_SCOPE.md)。
 
-- 使用 Qwen-MT 的专用请求格式，而不是把它当作普通聊天模型调用。
-- 通过 <code>translation_options.source_lang</code> 和 <code>translation_options.target_lang</code> 明确传递源语言、目标语言，并自动设置财经领域。
-- 只发送模型要求的 <code>user</code> 消息，不发送不兼容的 <code>system</code> 消息；因此 Qwen-MT 会使用内置的专用翻译设置，而不是通用系统提示词。
-- 适用于标题、RSS 简介和全文翻译；Qwen-MT 本身是翻译服务，不用于 AI 文章摘要功能。
+## 第一次使用：从订阅到翻译
 
-## 翻译工作方式
+1. 安装 [v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6)，首次启动会添加一组财经 RSS 订阅。
+2. 先阅读原文标题和 RSS 摘要；也可以在设置中删除、添加订阅，或用 OPML 导入自己的订阅。
+3. 进入 **设置 → AI 和翻译 → 翻译 API**，选择已有预设或填写兼容 Chat Completions 的服务商、接口地址和模型。
+4. 填入**自己的** API Key，选择目标语言，点击 **测试连接** 后保存。API Key 不由本项目提供。
+5. 可选开启“自动翻译所有文章标题”：未缓存标题会在后台依次处理；关闭自动翻译后，已缓存的译文仍可按“显示已翻译标题”开关显示。
+6. 打开文章时会复用已缓存标题并翻译 RSS 摘要；需要阅读全文时再点击顶部的“翻译全文”，避免打开预览就产生大请求。
 
-1. 进入 **设置 → AI 和翻译 → 翻译 API**。
-2. 选择 **DeepSeek V4.1 Flash** 或 **Qwen-MT Flash**，确认自动填入的模型和接口地址。
-3. 填入自己的 API Key，选择目标语言；源语言可以保持“自动检测”，也可以手动指定。
-4. 可选填写自定义系统提示词。Qwen-MT 使用专用翻译参数，不会发送通用系统提示词。
-5. 点击“测试连接”，成功后保存。
-6. 开启“自动翻译所有文章标题”即可在打开应用后后台处理未缓存标题；需要停止继续请求时关闭此开关，并按需保留“显示已翻译标题”。
-7. 打开文章时，详情页会显示已缓存的译文标题，并自动翻译 RSS 简介。阅读全文时再点击顶部的“翻译全文”。
+翻译结果按文章和翻译配置缓存。模型、接口、源语言、目标语言或提示词变化后，会产生新的缓存标识；长文会分块处理，请求按序发送，临时错误可能重试。缓存可以减少重复请求，但不保证零费用或固定翻译质量。
 
-翻译结果按文章和翻译配置缓存。模型、接口、源语言、目标语言或提示词变化后会自动使用新的缓存标识，避免把旧配置的结果误当成新结果。长内容会分块处理，网络请求按序进行，并对可恢复错误进行重试，以平衡速度、稳定性和 API 用量。
+## 预置财经源
 
-## 预置财经资讯
+默认源覆盖综合新闻、市场动态、企业/投资媒体与宏观数据，选择依据和可替换方式见[财经源说明](docs/FEEDS.md)。源来自第三方出版方，可能改 URL、限流、删改内容或暂时不可用；它们不构成推荐或投资意见。
 
-首次启动会预置 12 个财经源：
+你可以随时添加 RSS、Atom 或 JSON Feed，也可以用 OPML 导入/导出订阅。
 
-CNBC Top News、CNBC Markets、MarketWatch Top Stories、MarketWatch Market Pulse、Yahoo Finance、WSJ Markets、Nasdaq Markets、NYT Economy、Fortune、Seeking Alpha、NPR Business、FRED Blog。
+## 翻译、成本与隐私边界
 
-也可以随时添加自己的 RSS、Atom 或 JSON Feed，并通过 OPML 导入或导出订阅。
-
-## 主要能力
-
-- RSS、Atom、JSON Feed 解析
-- 离线阅读、后台同步、未读计数、收藏和桌面小组件
-- 全文抓取、文章搜索、OPML 导入/导出
-- AI 翻译、设备本地离线翻译和 DeepL
-- OpenAI、Azure OpenAI 及其他兼容 Chat Completions 的服务商
-- 自定义源语言、目标语言和财经翻译提示词
-
-## 隐私与 API Key
-
-- 应用不内置任何 API Key，服务费用由用户自己的服务商账户承担。
-- API Key 通过 Android Keystore 加密后保存在本地，不写入日志、OPML 导出或文章数据。
-- 远程接口默认要求使用 HTTPS；只有本机或局域网等明确的本地地址允许使用 HTTP。
-- 不需要注册应用账号，订阅和文章数据默认保存在设备本地。
+- 应用不内置 API Key。DeepSeek、Qwen-MT 等预设只是便捷配置示例，也可以使用其他兼容服务、DeepL 或设备本地离线翻译；供应商选择不会改变本项目的 GPL 许可。
+- 翻译费用、限额、数据保留和服务可用性由你配置的服务商决定。自动翻译标题可能产生多次请求；请先用少量文章测试并查看服务商账单/隐私条款。
+- API Key 通过 Android Keystore 加密后保存在本地，不写入日志、OPML 导出或文章数据。不要把 Key 粘贴到 issue、日志、截图或 Pull Request 中。
+- 启用远程翻译后，发送给服务商的是你选择的文章文本及请求参数；含有敏感信息的文章应先确认服务商政策。远程接口默认要求 HTTPS，本机或局域网地址才允许使用 HTTP。
+- 订阅、文章和阅读状态默认保存在设备本地，不要求应用账号。RSS 内容仍由相应出版方提供，应用不保证其准确性、完整性或持续可用性。
 
 ## 安装与构建
 
-当前稳定 APK：[财经速读 v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6)。也可以自行构建：
+### 直接安装
 
-    ./gradlew :app:assembleFdroidRelease
+从 [FinanceReader v2.23.6 Release](https://github.com/freminet-pers/FinanceReader/releases/tag/v2.23.6) 下载 APK。当前 Release 是 arm64 目标，最低支持 Android 10（API 29）；从其他来源安装的 APK 可能使用不同签名，升级前请确认来源一致。
 
-构建需要 JDK 17+ 和 Android SDK 36，最低支持 Android 10（API 29），当前发布目标为 arm64。
+### 从源码构建
 
-<code>FdroidRelease</code> 是项目现有的 Gradle 构建变体名称，不是应用品牌名称。应用显示名为 **财经速读**，applicationId 为 <code>com.financereader.app</code>；该变体保留无 Google 服务的发布配置。
+需要 JDK 17+ 与 Android SDK 36；构建不需要 API Key。当前发布变体是 `FdroidRelease`，不是产品名称；应用显示名为“财经速读”，applicationId 为 `com.financereader.app`。
 
-提交前建议运行：
+```bash
+./gradlew :app:assembleFdroidRelease
+```
 
-    ./gradlew :app:ktlintCheck
-    ./gradlew :app:testFdroidDebugUnitTest
+提交前可运行轻量检查：
 
-贡献和代码规范请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [AGENTS.md](AGENTS.md)。
+```bash
+./gradlew :app:ktlintCheck
+./gradlew :app:testFdroidDebugUnitTest
+```
 
-## 许可
+## 文档与协作
 
-本项目基于 [Feeder](https://github.com/spacecowboy/Feeder) 二次开发，遵循 **GPL-3.0**，详见 [LICENSE](LICENSE)。
+- [文档索引](docs/README.md)：按语言进入财经源、项目范围和发布维护说明。
+- [贡献指南](CONTRIBUTING.md)：本项目的开发、测试、文档和翻译协作方式。
+- [安全报告](SECURITY.md)：API Key 处理和安全问题报告边界。
+- [财经源说明](docs/FEEDS.md)：默认 12 个源的覆盖面、URL 和替换方法。
+- [项目范围说明](docs/PROJECT_SCOPE.md)：FinanceReader 与 Feeder 的维护边界、归属和 changelog 约定。
+- [CHANGELOG](CHANGELOG.md)：FinanceReader 自己的版本记录与保留的 Feeder 上游历史；文件顶部有来源说明。
 
-感谢 Feeder 作者与社区；语言识别使用 [Lingua](https://github.com/pemistahl/lingua)，AI 调用使用 [openai-kotlin](https://github.com/aallam/openai-kotlin)。
+## 许可与第三方归属
+
+FinanceReader 基于 [Feeder](https://github.com/spacecowboy/Feeder) 二次开发，遵循 [GNU GPL-3.0](LICENSE)。语言识别使用 [Lingua](https://github.com/pemistahl/lingua)，AI 调用使用 [openai-kotlin](https://github.com/aallam/openai-kotlin)；其他依赖的许可证以各自项目和源码中的声明为准。
+
+财经内容、RSS/Atom/JSON Feed 地址及文章版权归相应出版方所有。FinanceReader 只提供本地聚合和可选翻译工具，不代表或再发布这些出版方。

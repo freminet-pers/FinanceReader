@@ -1,25 +1,24 @@
 name: Feature request
 description: Request a new feature or enhancement
-labels: ["Needs: Triage", "Type: Feature request"]
 body:
   - type: checkboxes
     id: checklist
     attributes:
       label: Checklist
       options:
-        - label: I have used the search function for [**OPEN**](https://github.com/spacecowboy/feeder/issues) issues to see if someone else has already submitted the same feature request.
+        - label: I have searched [open FinanceReader issues](https://github.com/freminet-pers/FinanceReader/issues?q=is%3Aissue+is%3Aopen) for duplicates.
           required: true
-        - label: I have **also** used the search function for [**CLOSED**](https://github.com/spacecowboy/feeder/issues?q=is%3Aissue+is%3Aclosed) issues to see if the feature was already implemented and is just waiting to be released, or if the feature was rejected.
+        - label: I have also searched [closed FinanceReader issues](https://github.com/freminet-pers/FinanceReader/issues?q=is%3Aissue+is%3Aclosed) for an existing implementation or explanation.
           required: true
-        - label: I will describe the problem with as much detail as possible.
+        - label: I will describe the problem and use case with enough detail to evaluate it.
           required: true
-        - label: This request contains only one single feature, **not** a list of multiple (related) features.
+        - label: This request contains one focused feature or improvement, not a bundle of unrelated requests.
           required: true
   - type: input
     id: version
     attributes:
       label: App version
-      description: The latest version can be different on different app stores.
+      description: The latest version can differ by installation source.
       placeholder: x.y.z
     validations:
       required: true
@@ -29,8 +28,8 @@ body:
       label: Where did you get the app from
       multiple: false
       options:
-        - Google Play
-        - F-Droid
+        - GitHub Release APK
+        - Built from source
         - Other
     validations:
       required: true
@@ -38,7 +37,7 @@ body:
     id: feature
     attributes:
       label: Feature or improvement you want
-      description: Try to be as specific as possible. Please not only explain what the feature does, but also how.
+      description: Explain the behavior and the user path as specifically as possible.
   - type: textarea
     id: reason
     attributes:
@@ -49,3 +48,4 @@ body:
     attributes:
       label: Screenshots / Drawings / Technical details
       description: If your request is about (or includes) changing or extending the UI, describe what the UI would look like and how the user would interact with it.
+
